@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ideation Co-pilot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+        background-color: #f0f9ff; /* Tailwind sky-50 */
+        background-image: radial-gradient(circle at 1px 1px, rgba(148, 163, 184, 0.15) 1px, transparent 0); /* slate-400 with alpha */
+        background-size: 28px 28px;
+        overscroll-behavior-y: none;
+      }
+
+      ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #e0f2fe; /* sky-100 */
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #7dd3fc; /* sky-300 */
+        border-radius: 5px;
+        border: 2px solid #e0f2fe;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #38bdf8; /* sky-400 */
+      }
+
+      * {
+        scrollbar-width: thin;
+        scrollbar-color: #7dd3fc #e0f2fe; /* thumb track */
+      }
+
+      input[type="number"]::-webkit-inner-spin-button,
+      input[type="number"]::-webkit-outer-spin-button {
+        opacity: 0.5;
+      }
+      .animated-gradient-text {
+        background-size: 200% auto;
+        animation: gradient-animation 5s ease-in-out infinite;
+      }
+
+      @keyframes gradient-animation {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+      
+      .aside-custom-scrollbar::-webkit-scrollbar-track {
+        background: #f8fafc; 
+      }
+      .aside-custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #cbd5e1; 
+        border-color: #f8fafc; 
+      }
+      .aside-custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8; 
+      }
+      .sticky-aside {
+        position: -webkit-sticky; 
+        position: sticky;
+        align-self: flex-start; 
+      }
+    </style>
+     <link rel="preconnect" href="https://fonts.googleapis.com">
+     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://esm.sh/@google/genai@^1.0.1",
+    "react": "https://esm.sh/react@^19.1.0",
+    "react-dom/client": "https://esm.sh/react-dom@^19.1.0/client"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+    <script type="module">
+      import React from 'react';
+      import ReactDOM from 'react-dom/client';
+      import { GoogleGenAI } from "@google/genai";
+
+      // --- START OF INLINED services/geminiService.js ---
+      const GEMINI_API_KEY = "AIzaSyDSF270Y1VJf1fe4G8ZAuw7bOITbAlal74"; 
+
+      if (!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_ACTUAL_GEMINI_API_KEY") {
+        console.error("Gemini API Key is missing or is a placeholder. Please replace 'YOUR_ACTUAL_GEMINI_API_KEY' with your actual key. API calls will fail.");
+      }
+      
+      const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+      const GEMINI_MODEL = 'gemini-2.5-flash-preview-04-17'; 
+
+      const generateIdeas = async (userInput) => {
+        if (!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_ACTUAL_GEMINI_API_KEY") {
+          throw new Error("Gemini API key is not configured correctly.");
+        }
+
+        const { topic, domains, numIdeas } = userInput;
+        const actualNumIdeas = numIdeas && numIdeas > 0 ? numIdeas : 5;
+
+        let prompt = `You are an AI Ideation Co-pilot.
+Your goal is to help users brainstorm and generate creative ideas.
+Based on the user's input, provide a list of ideas.
+
+User's Topic: "${topic}"\n`;
+
+        if (domains && domains.trim() !== "") {
+          prompt += `Desired Domains (optional, comma-separated): "${domains}"\n`;
+        }
+        prompt += `Number of Ideas to Generate: ${actualNumIdeas}\n`;
+
+        prompt += `
+Please generate ${actualNumIdeas} diverse and creative ideas related to the topic.
+If domains are specified, try to tailor ideas to those domains. If not, generate broadly.
+Return the ideas as a JSON array of objects. Each object MUST have a "title" (string) and a "description" (string) key.
+Do not include any explanatory text, comments, or markdown formatting before or after the JSON array itself.
+The response should be a direct, parsable JSON array.
+
+Example JSON output:
+[
+  {"title": "Idea 1 Title", "description": "A concise description for Idea 1."},
+  {"title": "Idea 2 Title", "description": "A concise description for Idea 2."}
+]`;
+
+        try {
+          const response = await ai.models.generateContent({
+            model: GEMINI_MODEL,
+            contents: prompt,
+            config: {
+              responseMimeType: "application/json",
+              temperature: 0.75, 
+            },
+          });
+
+          let jsonString = response.text.trim();
+          
+          const fenceRegex = /^```(?:json)?\s*\n?(.*?)\n?\s*```$/s;
+          const match = jsonString.match(fenceRegex);
+          if (match && match[1]) {
+            jsonString = match[1].trim();
+          }
+
+          let parsedIdeas;
+          try {
+            parsedIdeas = JSON.parse(jsonString);
+          } catch (parseError) {
+            console.error("Failed to parse JSON response from Gemini:", parseError);
+            console.error("Received string for parsing:", jsonString);
+            throw new Error(`Failed to parse ideas from AI. The response was not valid JSON. Raw response: ${jsonString.substring(0, 200)}...`);
+          }
+
+          if (!Array.isArray(parsedIdeas) || !parsedIdeas.every(idea => idea.title && idea.description)) {
+            console.error("Unexpected JSON structure from Gemini:", parsedIdeas);
+            throw new Error("AI response was not in the expected format (array of {title, description}).");
+          }
+          
+          return parsedIdeas.map((idea) => ({
+            id: crypto.randomUUID(),
+            title: idea.title,
+            description: idea.description,
+          }));
+
+        } catch (error) {
+          console.error("Error generating ideas with Gemini:", error);
+          if (error instanceof Error) {
+              throw new Error(`An error occurred while generating ideas: ${error.message}`);
+          }
+          throw new Error("An unknown error occurred while generating ideas.");
+        }
+      };
+      // --- END OF INLINED services/geminiService.js ---
+
+      // --- START OF INLINED components/LoadingSpinner.js ---
+      const LoadingSpinner = () => {
+        return React.createElement(
+          'div',
+          { className: "flex justify-center items-center my-10 h-full" }, 
+          React.createElement(
+            'svg',
+            {
+              className: "animate-spin h-12 w-12 text-sky-500", 
+              xmlns: "http://www.w3.org/2000/svg",
+              fill: "none",
+              viewBox: "0 0 24 24"
+            },
+            React.createElement('circle', {
+              className: "opacity-25",
+              cx: "12",
+              cy: "12",
+              r: "10",
+              stroke: "currentColor",
+              strokeWidth: "4"
+            }),
+            React.createElement('path', {
+              className: "opacity-75",
+              fill: "currentColor",
+              d: "M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            })
+          ),
+          React.createElement('p', { className: "ml-4 text-lg text-sky-600" }, "Brewing brilliance...")
+        );
+      };
+      // --- END OF INLINED components/LoadingSpinner.js ---
+
+      // --- START OF INLINED components/ErrorMessage.js ---
+      const ErrorMessage = ({ message }) => {
+        if (!message) return null;
+
+        return React.createElement(
+          'div',
+          {
+            className: "bg-red-100 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-md relative my-6 shadow-md",
+            role: "alert"
+          },
+          React.createElement(
+            'div', { className: "flex items-center" },
+            React.createElement('svg', { xmlns: "http://www.w3.org/2000/svg", viewBox: "0 0 20 20", fill: "currentColor", className: "w-6 h-6 mr-3 text-red-500" },
+              React.createElement('path', { fillRule: "evenodd", d: "M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z", clipRule: "evenodd" })
+            ),
+            React.createElement('div', null, 
+              React.createElement('strong', { className: "font-semibold" }, "Oh no! "),
+              React.createElement('span', { className: "block sm:inline" }, message)
+            )
+          )
+        );
+      };
+      // --- END OF INLINED components/ErrorMessage.js ---
+
+      // --- START OF INLINED components/IdeaCard.js ---
+      const IdeaCard = ({ idea }) => {
+        return React.createElement(
+          'div',
+          {
+            className: "bg-white/90 backdrop-blur-sm shadow-[0_3px_10px_rgba(0,0,0,0.04)] rounded-xl p-6 group transition-all duration-300 ease-in-out transform flex flex-col border border-slate-200/60"
+          },
+          React.createElement(
+            'h3',
+            {
+              className: "text-xl sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-sky-500 via-cyan-500 to-teal-500 mb-3 transition-colors"
+            },
+            idea.title
+          ),
+          React.createElement(
+            'p',
+            { className: "text-slate-600 text-sm sm:text-base leading-relaxed flex-grow" },
+            idea.description
+          )
+        );
+      };
+      // --- END OF INLINED components/IdeaCard.js ---
+
+      // --- START OF INLINED components/InputForm.js ---
+      const InputForm = ({ onSubmit, isLoading }) => {
+        const [topic, setTopic] = React.useState('');
+        const [domains, setDomains] = React.useState('');
+        const [numIdeas, setNumIdeas] = React.useState(5);
+
+        const handleSubmit = (e) => {
+          e.preventDefault();
+          if (!topic.trim()) {
+             const topicInput = document.getElementById('topic');
+             topicInput.focus();
+             topicInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
+             setTimeout(() => topicInput.classList.remove('border-red-500', 'ring-1', 'ring-red-500'), 2500);
+            return;
+          }
+          onSubmit({ topic, domains, numIdeas });
+        };
+
+        const inputBaseClasses = "w-full p-3 bg-white border border-slate-300 placeholder-slate-400/80 text-slate-700 rounded-lg transition-all duration-200 ease-in-out focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 shadow-sm hover:border-slate-400";
+
+        return React.createElement(
+          'form',
+          {
+            onSubmit: handleSubmit,
+            className: "bg-white rounded-2xl p-6 sm:p-8 w-full space-y-6 sm:space-y-8 border border-slate-200/80" 
+          },
+          React.createElement(
+            'div',
+            null,
+            React.createElement(
+              'label',
+              { htmlFor: "topic", className: "block text-sm font-semibold text-slate-700 mb-2" },
+              "Main Topic",
+              React.createElement('span', { className: "text-sky-600 font-bold" }, "")
+            ),
+            React.createElement('textarea', {
+              id: "topic",
+              value: topic,
+              onChange: (e) => {
+                setTopic(e.target.value);
+                e.target.classList.remove('border-red-500', 'ring-1', 'ring-red-500');
+              },
+              placeholder: "Enter your basic idea...",
+              rows: 3,
+              className: `${inputBaseClasses} resize-none min-h-[80px]`, 
+              required: true
+            })
+          ),
+          React.createElement(
+            'div',
+            null,
+            React.createElement(
+              'label',
+              { htmlFor: "domains", className: "block text-sm font-semibold text-slate-700 mb-2" },
+              "Focus Domains"
+            ),
+            React.createElement('input', {
+              type: "text",
+              id: "domains",
+              value: domains,
+              onChange: (e) => setDomains(e.target.value),
+              placeholder: "Choose Category",
+              className: inputBaseClasses
+            })
+          ),
+          React.createElement(
+            'div',
+            null,
+            React.createElement(
+              'label',
+              { htmlFor: "numIdeas", className: "block text-sm font-semibold text-slate-700 mb-2" },
+              "Number of Ideas to Generate (1-15)"
+            ),
+            React.createElement('input', {
+              type: "number",
+              id: "numIdeas",
+              value: numIdeas,
+              onChange: (e) => setNumIdeas(Math.max(1, Math.min(15, parseInt(e.target.value, 10) || 1))), 
+              min: "1",
+              max: "15",
+              className: `${inputBaseClasses} w-full sm:w-48`
+            })
+          ),
+          React.createElement(
+            'button',
+            {
+              type: "submit",
+              disabled: isLoading,
+              className: "w-full bg-gradient-to-r from-sky-500 to-cyan-500 hover:from-sky-600 hover:to-cyan-600 text-white font-semibold py-3.5 px-8 rounded-lg shadow-md focus:outline-none focus:ring-4 focus:ring-sky-300 transition-all duration-300 ease-in-out active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center text-base"
+            },
+            isLoading
+              ? React.createElement(
+                  React.Fragment,
+                  null,
+                  React.createElement(
+                    'svg',
+                    {
+                      className: "animate-spin -ml-1 mr-3 h-5 w-5 text-white",
+                      xmlns: "http://www.w3.org/2000/svg",
+                      fill: "none",
+                      viewBox: "0 0 24 24"
+                    },
+                    React.createElement('circle', {
+                      className: "opacity-25",
+                      cx: "12",
+                      cy: "12",
+                      r: "10",
+                      stroke: "currentColor",
+                      strokeWidth: "4"
+                    }),
+                    React.createElement('path', {
+                      className: "opacity-75",
+                      fill: "currentColor",
+                      d: "M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    })
+                  ),
+                  "Generating Insights..."
+                )
+              : React.createElement(
+                  React.Fragment,
+                  null,
+                  React.createElement('svg', {xmlns:"http://www.w3.org/2000/svg", viewBox:"0 0 20 20", fill:"currentColor", className:"w-5 h-5 mr-2"},
+                    React.createElement('path', {d:"M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z"})
+                  ),
+                  "Spark New Ideas"
+                )
+          )
+        );
+      };
+      // --- END OF INLINED components/InputForm.js ---
+
+      // --- START OF INLINED App.js ---
+      const App = () => {
+        const [ideas, setIdeas] = React.useState([]);
+        const [isLoading, setIsLoading] = React.useState(false);
+        const [error, setError] = React.useState(null);
+        const [showIntro, setShowIntro] = React.useState(true);
+
+
+        const handleGenerateIdeas = React.useCallback(async (userInput) => {
+          setIsLoading(true);
+          setError(null);
+          setIdeas([]);
+          setShowIntro(false); 
+
+          try {
+            const fetchedIdeas = await generateIdeas(userInput);
+            setIdeas(fetchedIdeas);
+          } catch (err) {
+            if (err instanceof Error) {
+              setError(err.message);
+            } else {
+              setError('An unexpected error occurred.');
+            }
+            setIdeas([]);
+          } finally {
+            setIsLoading(false);
+          }
+        }, []);
+
+        return React.createElement(
+          'div',
+          {
+            className: "min-h-screen text-slate-800 flex flex-col selection:bg-sky-500/30 selection:text-sky-800"
+          },
+          React.createElement(
+            'header',
+            { className: "w-full py-6 sm:py-8 shadow-sm bg-white/80 backdrop-blur-md sticky top-0 z-10" }, 
+             React.createElement(
+                'div',
+                { className: "max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex items-center justify-center" },
+                React.createElement('svg', { xmlns: "http://www.w3.org/2000/svg", fill: "none", viewBox: "0 0 24 24", strokeWidth: "1.5", stroke: "currentColor", className: "w-10 h-10 sm:w-12 sm:h-12 text-sky-500 mr-3" },
+                    React.createElement('path', { strokeLinecap: "round", strokeLinejoin: "round", d: "M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.355a7.5 7.5 0 01-4.5 0m4.5 0v.75A2.25 2.25 0 0112 21h-.008c-.54 0-.992-.113-1.423-.323M12 18V9.75m0 0A6.023 6.023 0 0010.5 9M12 9.75c.728 0 1.453.09 2.127.26M10.5 9a5.995 5.995 0 00-5.042 4.213M10.5 9.001c1.083-.78 2.304-1.26 3.6-1.26 2.502 0 4.683 1.413 5.68 3.46M12 3c-.095 0-.19.003-.283.009M12 3c.095 0 .19-.003.283-.009M12 3v.003M9.75 4.125a5.983 5.983 0 014.5 0M3.75 7.5A5.983 5.983 0 018.25 6M3.75 7.5V9M3.75 7.5S3 9 3 10.5m0 0a5.995 5.995 0 005.042 4.213m0 0a5.995 5.995 0 01-5.042-4.213M10.5 14.999c-1.083.78-2.304 1.26-3.6 1.26-2.502 0-4.683-1.413-5.68-3.46" })
+                ),
+                React.createElement(
+                'h1',
+                {
+                    className: "text-3xl sm:text-4xl lg:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-sky-600 via-cyan-500 to-teal-500 animated-gradient-text py-1"
+                },
+                "Ideation Co-pilot"
+                )
+            )
+          ),
+          React.createElement( 
+            'div',
+            { className: "flex-grow w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col md:flex-row gap-8" },
+            React.createElement(
+              'aside',
+              { className: "w-full md:w-[400px] lg:w-[450px] md:flex-shrink-0 sticky-aside md:top-28 md:max-h-[calc(100vh-8rem)] md:overflow-y-auto aside-custom-scrollbar p-1" },
+              React.createElement(InputForm, { onSubmit: handleGenerateIdeas, isLoading: isLoading })
+            ),
+            React.createElement(
+              'section',
+              { className: "flex-grow min-h-[400px]" }, 
+                isLoading && React.createElement(LoadingSpinner, null),
+                error && React.createElement(ErrorMessage, { message: error }),
+                !isLoading && !error && ideas.length === 0 && showIntro &&
+                React.createElement( 
+                    'div',
+                    { className: "flex flex-col items-center justify-center h-full min-h-[300px] text-center text-slate-400 p-8 bg-white rounded-xl border border-slate-200/60" },
+                    React.createElement('svg', { xmlns: "http://www.w3.org/2000/svg", fill: "none", viewBox: "0 0 24 24", strokeWidth: "1.5", stroke: "currentColor", className: "w-20 h-20 mx-auto mb-4 text-sky-200" },
+                        React.createElement('path', { strokeLinecap: "round", strokeLinejoin: "round", d: "M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.355a7.5 7.5 0 01-4.5 0m4.5 0v.75A2.25 2.25 0 0112 21h-.008c-.54 0-.992-.113-1.423-.323M12 18V9.75m0 0A6.023 6.023 0 0010.5 9M12 9.75c.728 0 1.453.09 2.127.26M10.5 9a5.995 5.995 0 00-5.042 4.213M10.5 9.001c1.083-.78 2.304-1.26 3.6-1.26 2.502 0 4.683 1.413 5.68 3.46M12 3c-.095 0-.19.003-.283.009M12 3c.095 0 .19-.003.283-.009M12 3v.003M9.75 4.125a5.983 5.983 0 014.5 0M3.75 7.5A5.983 5.983 0 018.25 6M3.75 7.5V9M3.75 7.5S3 9 3 10.5m0 0a5.995 5.995 0 005.042 4.213m0 0a5.995 5.995 0 01-5.042-4.213M10.5 14.999c-1.083.78-2.304 1.26-3.6 1.26-2.502 0-4.683-1.413-5.68-3.46" })
+                    ),
+                    React.createElement('p', { className: "text-lg" }, "Generated ideas will appear here.")
+                ),
+                !isLoading && !error && ideas.length === 0 && !showIntro && 
+                React.createElement(
+                    'div',
+                    { className: "flex flex-col items-center justify-center h-full min-h-[300px] text-center text-slate-500 p-8 bg-white rounded-xl border border-slate-200/60" },
+                    React.createElement('svg', {xmlns:"http://www.w3.org/2000/svg", fill:"none", viewBox:"0 0 24 24", strokeWidth:"1.5", stroke:"currentColor", className:"w-16 h-16 mx-auto mb-4 text-sky-300"},
+                       React.createElement('path', { strokeLinecap:"round", strokeLinejoin:"round", d:"M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125V6.375c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v.001c0 .621.504 1.125 1.125 1.125z" })
+                    ),
+                    React.createElement('p', { className: "text-xl font-medium text-slate-600" }, "No ideas found"),
+                    React.createElement('p', { className: "mt-1 text-slate-400" }, "Try adjusting your topic or criteria.")
+                ),
+                !isLoading && ideas.length > 0 &&
+                React.createElement(
+                    'div',
+                    { className: "w-full" },
+                    // Removed the h2 heading "Generated Ideas"
+                    React.createElement(
+                    'div',
+                    { className: "grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2" }, // Added pt-2 for a bit of space if needed, adjust as necessary
+                    ideas.map((idea) => React.createElement(IdeaCard, { key: idea.id, idea: idea }))
+                    )
+                )
+            )
+          ),
+          React.createElement(
+            'footer',
+            { className: "w-full text-center mt-auto py-8 bg-slate-50" } 
+          )
+        );
+      };
+      // --- END OF INLINED App.js ---
+
+      // --- START OF INLINED index.js (React Mounting) ---
+      const rootElement = document.getElementById('root');
+      if (!rootElement) {
+        throw new Error("Could not find root element to mount to");
+      }
+
+      const root = ReactDOM.createRoot(rootElement);
+      root.render(
+        React.createElement(
+          React.StrictMode,
+          null,
+          React.createElement(App, null)
+        )
+      );
+      // --- END OF INLINED index.js (React Mounting) ---
+    </script>
+  </body>
+</html>
