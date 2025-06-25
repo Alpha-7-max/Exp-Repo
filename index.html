@@ -1,495 +1,2712 @@
+Okay, I will remove all Firebase backend integration. This means authentication, user-specific data storage (like chat history and PINs tied to users in Firebase), and Firebase-specific functions will be removed.
+
+Here's how the app will function now:
+
+1.  **No Login/Registration:** The app will be immediately accessible.
+2.  **Local Chat History:** Chat history will be stored in the browser's local state. **This means all chats will be lost if the page is reloaded or the browser tab is closed.**
+3.  **Local Session PIN:**
+    *   The "Change PIN" option will allow setting a PIN for the current session only. This PIN will be stored in the app's local state and **will be lost on page reload.**
+    *   The sidebar will be locked using this session-based PIN.
+4.  **AI Message Card Styling:**
+    *   The background color will be `bg-gray-50`.
+    *   The border color will be `border-gray-200`.
+    *   The font size and weight will remain as `text-ai-message-text` (`16.8px`) and `font-medium` respectively.
+
+**Important Considerations:**
+
+*   **Data Persistence:** Without Firebase, all data (chats, PIN) is ephemeral and exists only for the current browser session.
+*   **Simplicity:** The removal of Firebase simplifies the codebase significantly in terms of backend interactions.
+
+Here's the updated code. I've removed all Firebase-related imports, configurations, and logic, and adapted the data handling to use React's local state.
+
+```html
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Ideation Co-pilot</title>
+    <title>AlphaGPT</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-      body {
-        font-family: 'Inter', sans-serif;
-        background-color: #f0f9ff; /* Tailwind sky-50 */
-        background-image: radial-gradient(circle at 1px 1px, rgba(148, 163, 184, 0.15) 1px, transparent 0); /* slate-400 with alpha */
-        background-size: 28px 28px;
-        overscroll-behavior-y: none;
-      }
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'brand-primary': 'rgb(var(--brand-primary) / <alpha-value>)',      
+              'brand-secondary': 'rgb(var(--brand-secondary) / <alpha-value>)',  
+              'surface-main': 'rgb(var(--surface-main) / <alpha-value>)',       
+              'surface-card': 'rgb(var(--surface-card) / <alpha-value>)',      
+              'surface-input': 'rgb(var(--surface-input) / <alpha-value>)',    
+              'surface-accent': 'rgb(var(--surface-accent) / <alpha-value>)',    
+              'surface-bubble-ai': 'rgb(var(--surface-bubble-ai) / <alpha-value>)', // Will be overridden for specific AI cards
+              'surface-chat-area': 'rgb(var(--surface-chat-area) / <alpha-value>)', 
+              'surface-user-bubble-bg': 'rgb(var(--surface-user-bubble-bg-val) / <alpha-value>)', 
+              'border-user-bubble-color': 'rgb(var(--border-user-bubble-color-val) / <alpha-value>)',
+              'surface-sidebar': 'rgb(var(--surface-sidebar) / <alpha-value>)',
 
-      ::-webkit-scrollbar {
-        width: 10px;
-        height: 10px;
-      }
-      ::-webkit-scrollbar-track {
-        background: #e0f2fe; /* sky-100 */
-      }
-      ::-webkit-scrollbar-thumb {
-        background: #7dd3fc; /* sky-300 */
-        border-radius: 5px;
-        border: 2px solid #e0f2fe;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: #38bdf8; /* sky-400 */
-      }
+              'text-primary': 'rgb(var(--text-primary) / <alpha-value>)',         
+              'text-secondary': 'rgb(var(--text-secondary) / <alpha-value>)',           
+              'text-on-primary': 'rgb(var(--text-on-primary) / <alpha-value>)',
+              'text-subtle': 'rgb(var(--text-subtle) / <alpha-value>)',
+              'text-button-icon': 'rgb(var(--text-button-icon) / <alpha-value>)',
+              'link-blue': '#0000FF', 
+              'link-blue-hover': '#0000CC', 
 
-      * {
-        scrollbar-width: thin;
-        scrollbar-color: #7dd3fc #e0f2fe; /* thumb track */
+              'border-default': 'rgb(var(--border-default) / <alpha-value>)',
+              'border-light': 'rgb(var(--border-light) / <alpha-value>)',
+              'border-medium': 'rgb(var(--border-medium) / <alpha-value>)',
+              'interactive-hover': 'rgb(var(--interactive-hover) / <alpha-value>)',
+              'focus-ring-color': 'rgb(var(--focus-ring-color) / <alpha-value>)',
+              
+              'status-info': 'rgb(var(--status-info) / <alpha-value>)',
+              'status-success': 'rgb(var(--status-success) / <alpha-value>)',
+              'status-warning': 'rgb(var(--status-warning) / <alpha-value>)',
+              'status-error': 'rgb(var(--status-error) / <alpha-value>)',
+              'error-fg': 'rgb(var(--error-fg) / <alpha-value>)',
+              'brand-send-active': '#D77655',
+              'brand-send-hover': '#BE6241', 
+            },
+            fontSize: {
+                'ai-message-text': '16.8px', 
+            },
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'], 
+              poppins: ['Poppins', 'sans-serif'],
+              roboto: ['Roboto', 'sans-serif'],
+              serif: ['Georgia', 'Cambria', '"Times New Roman"', 'Times', 'serif'],
+              outfit: ['Outfit', 'sans-serif'],
+              lato: ['Lato', 'sans-serif'],
+              'open-sans': ['"Open Sans"', 'sans-serif'],
+              montserrat: ['Montserrat', 'sans-serif'],
+              'source-sans-pro': ['"Source Sans Pro"', 'sans-serif'],
+              nunito: ['Nunito', 'sans-serif'],
+              raleway: ['Raleway', 'sans-serif'],
+              merriweather: ['Merriweather', 'serif'],
+              'playfair-display': ['"Playfair Display"', 'serif'],
+              ubuntu: ['Ubuntu', 'sans-serif'],
+              'josefin-sans': ['"Josefin Sans"', 'sans-serif'],
+            },
+            animation: {
+              'fade-in-up': 'fadeInUp 0.5s ease-out forwards',
+              'scale-in-subtle': 'scaleInSubtle 0.35s ease-out forwards',
+              'pulse-gentle': 'pulseGentle 2.8s infinite ease-in-out', 
+              'button-press': 'buttonPress 0.2s ease-out',
+              'rippleOut': 'rippleOut 2.5s infinite ease-out', 
+              'speak-bob': 'speakBob 0.7s ease-in-out',
+              'think-glance': 'thinkGlance 2s infinite ease-in-out',
+              'blink': 'blink 4s infinite ease-in-out',
+              'happy-bounce': 'happyBounce 0.5s ease-out',
+              'empty-state-glow': 'emptyStateGlow 3.5s infinite alternate ease-in-out',
+              'shiny-text': 'shinyText 2.5s linear infinite',
+              'modal-fade-in': 'modal-fade-in 0.3s ease-out forwards', 
+              'modal-fade-out': 'modal-fade-out 0.3s ease-in forwards',
+              'shimmer': 'shimmer 1.5s ease-in-out infinite', 
+              'spin-continuous': 'spinContinuous 2s linear infinite',
+              'slide-in-left': 'slideInLeft 0.3s ease-out forwards',
+              'slide-out-left': 'slideOutLeft 0.3s ease-in forwards',
+            },
+            keyframes: {
+              fadeInUp: { '0%': { opacity: '0', transform: 'translateY(10px)' }, '100%': { opacity: '1', transform: 'translateY(0)' }, },
+              scaleInSubtle: { '0%': { opacity: '0.5', transform: 'scale(0.95)' }, '100%': { opacity: '1', transform: 'scale(1)' }, },
+              pulseGentle: {  '0%, 100%': { transform: 'scale(1)', opacity: '0.8' }, '50%': { transform: 'scale(1.015)', opacity: '1' }, },
+              buttonPress: { '0%': { transform: 'scale(1)' }, '50%': { transform: 'scale(0.96)'}, '100%': { transform: 'scale(1)' }, },
+              emptyStateGlow: {  '0%': { filter: 'drop-shadow(0 0 3px rgba(var(--brand-primary), 0.2)) drop-shadow(0 0 6px rgba(var(--brand-primary), 0.15))' }, '100%': { filter: 'drop-shadow(0 0 6px rgba(var(--brand-primary), 0.25)) drop-shadow(0 0 12px rgba(var(--brand-primary), 0.18))' }, },
+              rippleOut: {  '0%': { transform: 'scale(0.8)', opacity: '0.3' }, '70%': { opacity: '0.1' }, '100%': { transform: 'scale(2.0)', opacity: '0' }, },
+              speakBob: { '0%, 100%': { transform: 'translateY(0) scale(1)' }, '50%': { transform: 'translateY(-2px) scale(1.05)' }, },
+              thinkGlance: { '0%, 100%': { transform: 'translateX(0px)' }, '25%': { transform: 'translateX(-1px)' }, '75%': { transform: 'translateX(1px)' }, },
+              blink: { '0%, 90%, 100%': { transform: 'scaleY(1)' }, '95%': { transform: 'scaleY(0.1)' }, },
+              happyBounce: { '0%, 100%': { transform: 'translateY(0) rotate(0deg) scale(1)' }, '50%': { transform: 'translateY(-3px) rotate(3deg) scale(1.03)' }, },
+              shinyText: { '0%': { backgroundPosition: '-200% center' }, '100%': { backgroundPosition: '200% center' }, },
+              'modal-fade-in': { 
+                '0%': { opacity: '0', transform: 'scale(0.95)' },
+                '100%': { opacity: '1', transform: 'scale(1)' },
+              },
+              'modal-fade-out': { 
+                '0%': { opacity: '1', transform: 'scale(1)' },
+                '100%': { opacity: '0', transform: 'scale(0.95)' },
+              },
+              shimmer: { 
+                '0%': { transform: 'translateX(-100%)' },
+                '100%': { transform: 'translateX(100%)' },
+              },
+              spinContinuous: { 
+                '0%': { transform: 'rotate(0deg)' },
+                '100%': { transform: 'rotate(360deg)' }
+              },
+              slideInLeft: {
+                '0%': { transform: 'translateX(-100%)', opacity: '0.5' },
+                '100%': { transform: 'translateX(0)', opacity: '1' },
+              },
+              slideOutLeft: {
+                '0%': { transform: 'translateX(0)', opacity: '1' },
+                '100%': { transform: 'translateX(-100%)', opacity: '0' },
+              },
+            },
+            spacing: { 
+              '1.5': '0.375rem', 
+              '2.5': '0.625rem',
+              '3.5': '0.875rem', 
+            },
+            boxShadow: {
+                'card': '0 6px 20px rgba(var(--text-primary), 0.04), 0 3px 8px rgba(var(--text-primary),0.02)', 
+                'header': '0 1px 2px rgba(var(--text-primary), 0.03), 0 1px 1px rgba(var(--text-primary), 0.015)',
+                'input-focus': '0 0 0 1px rgb(var(--focus-ring-color) / 1)', 
+                'chat-window': '0 15px 50px -8px rgba(var(--text-primary), 0.08), 0 8px 25px -8px rgba(var(--text-primary),0.05)',
+                'input-active-glow': '0 0 6px rgba(var(--text-secondary),0.15)',
+            },
+             maxWidth: { 
+              '18rem': '18rem', 
+            }
+          },
+        },
       }
+    </script>
+    <style type="text/tailwindcss">
+      @layer base {
+        :root {
+          --brand-primary: 100 116 139; 
+          --brand-secondary: 71 85 105; 
+          
+          --focus-ring-color: 148 163 184; 
+          --text-button-icon: 71 85 105; 
+          
+          --surface-main: 249 246 238; 
+          --surface-card: 255 255 255;
+          --surface-chat-area: 249 246 238; 
+          --surface-input: 255 255 255;
+          --surface-accent: 241 245 249; 
+          --surface-bubble-ai: 248 250 252; /* Default AI bubble color (gray-50) */
+          --surface-sidebar: 255 255 255; 
+          
+          --surface-user-bubble-bg-val: 232 232 232; 
+          
+          --text-primary: 17 24 39; 
+          --text-secondary: 55 65 81;    
+          --text-subtle: 107 114 128; 
+          --text-on-primary: 255 255 255; 
+          
+          --border-default: 229 231 235; 
+          --border-light: 243 244 246;     
+          --border-medium: 209 213 219; 
+          
+          --interactive-hover: 229 231 235; 
+          
+          --status-info: 59 130 246; 
+          --status-success: 22 163 74;    
+          --status-warning: 245 158 11; 
+          --status-error: 220 38 38;
+          --error-fg: 255 255 255; 
+        }
+        html, body, #root { @apply h-full overflow-hidden bg-surface-main; }
+        body { @apply font-sans text-text-primary m-0; }
+        ::selection { @apply bg-blue-200 text-blue-800; } 
+      }
+      @layer components {
+        .markdown-content { @apply font-normal font-source-sans-pro; }
+        .markdown-content p { @apply mb-3 last:mb-0 text-ai-message-text font-medium; } 
+        .markdown-content ul, .markdown-content ol { @apply list-inside mb-3 pl-4 text-ai-message-text; } 
+        .markdown-content ul { @apply list-disc; } .markdown-content ul ul { @apply list-[circle] ml-4;}
+        .markdown-content ol { @apply list-decimal; } .markdown-content ol ol { @apply list-[lower-alpha] ml-4;}
+        .markdown-content li { @apply mb-1.5 text-ai-message-text; }
+        .markdown-content strong, .markdown-content b { @apply font-semibold text-text-primary; } 
+        .markdown-content em, .markdown-content i { @apply italic text-text-secondary; }
+        .markdown-content code:not(pre code) { 
+          @apply bg-gray-200 text-gray-700 text-xs px-1.5 py-0.5 rounded-md font-mono shadow-sm border border-gray-300; 
+        } 
+        .markdown-content pre { 
+          @apply bg-gray-50 text-gray-800 text-sm rounded-lg overflow-x-auto my-4 font-mono relative border border-gray-300; 
+        } 
+        .markdown-content pre code { 
+          @apply block bg-transparent text-inherit p-0 shadow-none border-none px-4 pb-4 pt-8 !whitespace-pre; 
+        }
+        .markdown-content pre::-webkit-scrollbar { @apply h-px; } 
+        .markdown-content pre::-webkit-scrollbar-track { @apply bg-transparent; } 
+        .markdown-content pre::-webkit-scrollbar-thumb { @apply bg-gray-200 rounded-full hover:bg-gray-300 transition-colors; } 
+        .markdown-content pre { scrollbar-width: thin; scrollbar-color: theme('colors.gray.200') transparent; }
+        .markdown-content a { @apply text-link-blue hover:text-link-blue-hover underline decoration-link-blue/50 hover:decoration-link-blue-hover/50 transition-colors; } 
+        .markdown-content blockquote { @apply border-l-4 border-brand-primary/60 bg-brand-primary/10 pl-4 py-2 my-4 text-text-secondary italic text-base; } 
+        .markdown-content h1, .markdown-content h2, .markdown-content h3,
+        .markdown-content h4, .markdown-content h5, .markdown-content h6 { @apply font-poppins my-4 text-text-primary leading-tight; }
+        .markdown-content h1 { @apply text-2xl font-bold; }
+        .markdown-content h2 { @apply text-xl font-semibold; }
+        .markdown-content h3 { @apply text-lg font-semibold; }
+        .markdown-content h4 { @apply text-base font-semibold; }
+        .markdown-content h5 { @apply text-sm font-semibold; }
+        .markdown-content h6 { @apply text-xs font-semibold; }
+        .markdown-content hr { @apply my-6 border-border-default; }
+        .markdown-content table { 
+          @apply block max-w-full my-4 border-collapse text-xs shadow-sm rounded-lg overflow-x-auto; 
+          scrollbar-width: thin; 
+          scrollbar-color: theme('colors.gray.300') theme('colors.gray.100');
+        }
+        .markdown-content table::-webkit-scrollbar { @apply h-1; } 
+        .markdown-content table::-webkit-scrollbar-track { @apply bg-gray-100 rounded-full; } 
+        .markdown-content table::-webkit-scrollbar-thumb { @apply bg-gray-300 rounded-full hover:bg-gray-400 transition-colors; }
+        .markdown-content th, .markdown-content td { @apply border border-border-default p-2 text-left; } 
+        .markdown-content th { @apply bg-surface-accent font-semibold text-text-primary; }
+        .markdown-content td { @apply text-text-secondary; }
+        .markdown-content tbody tr:nth-child(even) { @apply bg-gray-50/50; }
 
-      input[type="number"]::-webkit-inner-spin-button,
-      input[type="number"]::-webkit-outer-spin-button {
-        opacity: 0.5;
-      }
-      .animated-gradient-text {
-        background-size: 200% auto;
-        animation: gradient-animation 5s ease-in-out infinite;
-      }
+        .chat-messages-container::-webkit-scrollbar { @apply w-1.5; } 
+        .chat-messages-container::-webkit-scrollbar-track { @apply bg-transparent rounded-full; } 
+        .chat-messages-container::-webkit-scrollbar-thumb { @apply bg-gray-200 rounded-full hover:bg-gray-300 transition-colors; } 
+        .chat-messages-container { scrollbar-width: thin; scrollbar-color: theme('colors.gray.200') transparent; } 
+        
+        .text-gradient-brand { background-image: linear-gradient(to right, #60a5fa, #f472b6); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .text-gradient-brand-subtle { background-image: linear-gradient(to right, #a4a4f0, #b3f1ec); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .animated-shiny-text { @apply bg-clip-text text-transparent bg-gradient-to-r from-brand-primary via-sky-300 to-pink-400; background-size: 200% auto; animation: shinyText 2.5s linear infinite; }
+        .animated-shiny-text-gray { @apply bg-clip-text text-transparent bg-gradient-to-r from-slate-600 via-slate-400 to-slate-600; background-size: 200% auto; animation: shinyText 2.5s linear infinite; }
+        .hljs { @apply !bg-transparent !text-inherit; }
+        
+        .file-pill-container { @apply flex flex-wrap gap-1.5 mb-1.5 p-1 max-h-20 overflow-y-auto border-b border-gray-200; scrollbar-width: thin; scrollbar-color: theme('colors.slate.300') theme('colors.slate.100'); }
+        .file-pill-container::-webkit-scrollbar { @apply w-1.5 h-1.5; }
+        .file-pill-container::-webkit-scrollbar-track { @apply bg-slate-100 rounded-full; }
+        .file-pill-container::-webkit-scrollbar-thumb { @apply bg-slate-300 rounded-full hover:bg-slate-400; }
+        .file-pill { @apply flex items-center bg-gray-100 border border-border-light text-[11px] pl-1.5 pr-1 py-0.5 rounded-full text-text-secondary shadow-sm animate-scale-in-subtle; }
+        .file-pill-icon { @apply mr-1 text-brand-primary text-xs; }
+        .file-pill-name { @apply truncate max-w-[90px] sm:max-w-[110px] font-medium; }
+        .file-pill-remove { @apply ml-1 text-slate-400 hover:text-status-error p-0.5 rounded-full hover:bg-red-500/10 transition-colors focus:outline-none; }
+        .file-pill-remove i { @apply text-[10px] leading-none block; }
 
-      @keyframes gradient-animation {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-      }
-      
-      .aside-custom-scrollbar::-webkit-scrollbar-track {
-        background: #f8fafc; 
-      }
-      .aside-custom-scrollbar::-webkit-scrollbar-thumb {
-        background: #cbd5e1; 
-        border-color: #f8fafc; 
-      }
-      .aside-custom-scrollbar::-webkit-scrollbar-thumb:hover {
-        background: #94a3b8; 
-      }
-      .sticky-aside {
-        position: -webkit-sticky; 
-        position: sticky;
-        align-self: flex-start; 
+        .content-editable-input { @apply pt-1 pl-1 pb-2.5; }
+        .content-editable-input:empty:before { content: attr(data-placeholder); @apply text-text-subtle cursor-text absolute; pointer-events: none; }
+        .content-editable-input::-webkit-scrollbar { width: 5px; }
+        .content-editable-input::-webkit-scrollbar-track { background: transparent; margin-block: 2px; }
+        .content-editable-input::-webkit-scrollbar-thumb { background-color: rgba(var(--text-subtle), 0.25); border-radius: 10px; }
+        .content-editable-input::-webkit-scrollbar-thumb:hover { background-color: rgba(var(--text-subtle), 0.4); }
+        .content-editable-input { scrollbar-width: thin; scrollbar-color: rgba(var(--text-subtle), 0.25) transparent; }
+
+        .image-preview-container-input { @apply flex flex-wrap gap-2 p-1 mb-1.5 max-h-24 overflow-y-auto; scrollbar-width: thin; scrollbar-color: theme('colors.slate.300') theme('colors.slate.100'); }
+        .image-preview-container-input::-webkit-scrollbar { @apply w-1.5 h-1.5; }
+        .image-preview-container-input::-webkit-scrollbar-track { @apply bg-slate-100 rounded-full; }
+        .image-preview-container-input::-webkit-scrollbar-thumb { @apply bg-slate-300 rounded-full hover:bg-slate-400; }
+
+        .sidebar-chat-list::-webkit-scrollbar { @apply w-1; }
+        .sidebar-chat-list::-webkit-scrollbar-track { @apply bg-gray-100; }
+        .sidebar-chat-list::-webkit-scrollbar-thumb { @apply bg-gray-300 hover:bg-gray-400 rounded-full; }
+        .sidebar-chat-list { scrollbar-width: thin; scrollbar-color: theme('colors.gray.300') theme('colors.gray.100'); }
       }
     </style>
-     <link rel="preconnect" href="https://fonts.googleapis.com">
-     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <script type="importmap">
-{
-  "imports": {
-    "@google/genai": "https://esm.sh/@google/genai@^1.0.1",
-    "react": "https://esm.sh/react@^19.1.0",
-    "react-dom/client": "https://esm.sh/react-dom@^19.1.0/client"
-  }
-}
-</script>
-</head>
-  <body>
-    <div id="root"></div>
-    <script type="module">
-      import React from 'react';
+    <link rel="preconnect" href="https://fonts.googleapis.com"> <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700;800&family=Roboto:wght@400;500;700;900&family=Outfit:wght@400;700&family=Lato:wght@400;700&family=Open+Sans:wght@400;700&family=Montserrat:wght@400;700&family=Source+Sans+Pro:wght@400;500;600;700&family=Nunito:wght@400;700&family=Raleway:wght@400;700&family=Merriweather:wght@400;700&family=Playfair+Display:wght@400;700&family=Ubuntu:wght@400;700&family=Josefin+Sans:wght@400;700&display=swap" rel="stylesheet"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-light.min.css">
+
+    {/* Firebase SDKs are removed as per request */}
+
+    <script type="importmap">
+      {
+        "imports": {
+          "@google/genai": "https://esm.sh/@google/generative-ai@^0.11.3",
+          "react": "https://esm.sh/react@^18.2.0",
+          "react/": "https://esm.sh/react@^18.2.0/",
+          "react-dom/client": "https://esm.sh/react-dom@^18.2.0/client",
+          "marked": "https://esm.sh/marked@^12.0.2",
+          "highlight.js": "https://esm.sh/highlight.js@^11.9.0"
+        }
+      }
+    </script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  </head>
+  <body> <div id="root"></div>
+    <script type="text/babel" data-type="module">
+      import React, { useState, useCallback, useEffect, useRef } from 'react';
       import ReactDOM from 'react-dom/client';
-      import { GoogleGenAI } from "@google/genai";
+      import { GoogleGenerativeAI } from '@google/genai';
+      import { marked } from 'marked';
+      import hljs from 'highlight.js';
 
-      // --- START OF INLINED services/geminiService.js ---
-      const GEMINI_API_KEY = "AIzaSyDSF270Y1VJf1fe4G8ZAuw7bOITbAlal74"; 
+      // Firebase related variables (auth, database) are removed or will be undefined.
+      // Functions interacting with them will need to be adapted or removed.
 
-      if (!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_ACTUAL_GEMINI_API_KEY") {
-        console.error("Gemini API Key is missing or is a placeholder. Please replace 'YOUR_ACTUAL_GEMINI_API_KEY' with your actual key. API calls will fail.");
+      const renderer = new marked.Renderer();
+      renderer.link = (href, title, text) => {
+        const external = href && (href.startsWith('http://') || href.startsWith('https://'));
+        const target = external ? ' target="_blank" rel="noopener noreferrer"' : '';
+        const titleAttr = title ? ` title="${title}"` : '';
+        return `<a href="${href}"${target}${titleAttr}>${text}</a>`;
+      };
+      marked.setOptions({ gfm: true, breaks: true, smartypants: true, renderer });
+
+      const AVAILABLE_MODELS = [
+        { id: 'gemini-2.5-flash-preview-04-17', uiName: 'Alpha 2.5' },
+        { id: 'gemini-2.5-flash-lite-preview-06-17', uiName: 'Alpha 2.5-lite' },
+        { id: 'gemini-2.0-flash', uiName: 'Alpha 2.0' },
+      ];
+      const DEFAULT_MODEL_ID = AVAILABLE_MODELS[0].id; 
+
+      const API_KEY = "AIzaSyDgEdgBX2VWf2PO4X29haQzISTDTemzuW4"; 
+
+      const MAX_FILE_SIZE_MB = 5; const MAX_TOTAL_FILES_SIZE_MB = 20;
+
+      if (!API_KEY || API_KEY === "YOUR_GEMINI_API_KEY") { 
+         console.error(" ERROR: Gemini API Key is not set or is still the placeholder.");
+      }
+      const genAI = new GoogleGenerativeAI(API_KEY);
+
+      function getSystemInstruction() {
+        return `You are AlphaGPT, a highly advanced, friendly, and culturally aware assistant.
+
+
+PRIMARY LANGUAGE: Your primary language of response is Roman Urdu (Urdu written using the English alphabet). Strive to use it for all general conversation and answers.
+
+LANGUAGE FLEXIBILITY:
+
+If the user EXPLICITLY asks you to respond in a different language or script (e.g., "respond in English", "can you say that in French?", "اس کا جواب انگریزی میں دو", "write this in Nastaliq Urdu", "मुझे हिंदी में बताओ"), you MUST use the requested language AND SCRIPT for that response.
+
+After fulfilling a request in another language/script, if the user continues in that language/script or the context clearly indicates they wish to continue in that language/script for the current topic, you may continue in that language/script for a few turns.
+
+However, your DEFAULT behavior is to revert to Roman Urdu (using the English alphabet) for new, unrelated queries or if the user switches back to Roman Urdu.
+
+NEVER refuse a direct and clear request to use a specific language or script.
+
+When using a language other than Roman Urdu, or a script other than the Roman alphabet for Urdu, ensure your response in that language/script is natural and accurate.
+
+CRITICAL INSTRUCTION (Roman Urdu Default): When responding in Roman Urdu, it MUST be Urdu written in the English alphabet. NO Devanagari or any other script for Urdu words. This is your default for Urdu. However, if the user explicitly requests Urdu in a different script (e.g., Nastaliq), you MUST comply with their request for that specific response.
+
+SPECIAL CONTENT-BASED SCRIPT OVERRIDE (Urdu Poetry):
+
+When the user asks you to write, generate, or share any form of Urdu poetry (e.g., a poem, ghazal, nazm, shairi, couplets - in Roman Urdu: shair, nazm, ghazal, rubai), you MUST compose and present the poetry itself in Nastaliq Urdu script (real Pakistani Urdu script).
+
+This rule applies by default if the request is for Urdu poetry, EVEN IF the user's request is made in Roman Urdu or English, and they do not explicitly ask for Nastaliq script for the poetry.
+
+EXCEPTION: If the user EXPLICITLY requests the poetry in a different script (e.g., "write the poem in Roman Urdu," "mujhe Roman Urdu mein shairi chahiye"), you MUST honor that explicit script request for the poetry. This aligns with the general 'LANGUAGE FLEXIBILITY' rule about explicit requests.
+
+Any surrounding text accompanying the poetry (e.g., an introduction like "Sure, here's a ghazal for you:" or a concluding remark like "I hope you like it!") should follow your general language determination rules (defaulting to Roman Urdu unless the user explicitly requested otherwise for the entire interaction).
+
+The goal is to provide authentic Urdu poetry in its traditional script, enhancing the cultural relevance for this specific content type, unless the user specifically directs otherwise for the poetry.
+
+VERY CRITICAL - RESPONSE CONTENT (All Languages):
+Your final response to the user MUST be ONLY in the determined language for that turn (Roman Urdu by default, or as per user's explicit request, or as per special content rules like poetry).
+ABSOLUTELY NO internal monologues, self-correction notes, or descriptions of your decision-making process (e.g., "(The user is asking about X, so I should do Y)").
+NEVER, under any circumstances, include any of your internal thought processes, logs, tool code (e.g., \`tool_code print(google_search.search(...))\`), Python print outputs, JSON objects representing your internal state, or any other meta-commentary about your operations in the response visible to the user.
+If you use a tool, integrate its findings naturally into your response without mentioning the tool's execution details or your reasoning for using the tool.
+Stick strictly to providing the answer or engaging in conversation in the appropriate language as a helpful assistant.
+
+General Greeting Behavior & Style:
+
+Greeting Trigger: Greet ONLY when starting a new session or when it naturally fits the context (e.g., user says "Hi", "Hello", or returns after a long pause). DO NOT repeat greetings unnecessarily on follow-up queries within the same active conversation.
+
+Greeting Language: Your greetings MUST be in your determined response language (default Roman Urdu, or as requested by the user).
+
+Neutral and Conversational Greetings (Roman Urdu Example): When using Roman Urdu for greetings, employ neutral, polite, and common conversational phrases. Examples:
+
+"Hello!"
+
+"Hi!"
+
+"Kaisen hain aap?"
+
+"Kya haal hai?"
+
+"Welcome! Main aapki kya madad kar sakta/sakti hoon?"
+
+If the user says "Hi", you can respond with something like "Hi! Kaisen hain aap?" or "Hello! Kya chal raha hai?" Ensure the response is natural and varies.
+
+CRITICAL - AVOID RELIGIOUS GREETINGS/EXPRESSIONS: You MUST NOT use greetings or expressions such as 'Assalam-o-Alaikum', 'Walekum Assalam', 'Alhamdulillah', 'SubhanAllah', 'MashaAllah', 'Insha'Allah', 'JazakAllah' or any other explicitly religious salutations or exclamations in your standard interactions, greetings, or general conversational fillers.
+
+Your persona is that of a helpful, advanced AI assistant. It is not a religious scholar or figure.
+
+Maintain a universally welcoming, friendly, and respectful tone that is neutral regarding religious expressions in your own speech.
+
+CORE OPERATING PRINCIPLE & SEARCH POLICY:
+
+Prioritize Accuracy & Recency Above All: Your primary function is to deliver information that is current, factual, and directly relevant to the user's query. This is especially true when search is used.
+
+User-Controlled Search: The "Web Search" toggle in the input bar controls whether a web search is performed.
+
+If the toggle is ON, you MUST use the search tool to find information for relevant queries (UNLESS it's an identity question, see "Responding to Identity Questions" section).
+
+If the toggle is OFF, you will answer based on your training data.
+
+User-Initiated Search is a MANDATORY Command (if toggle allows):
+
+If the user explicitly asks you to search using phrases such as "search krke," "search krlo," "search kro," "internet pe dekho," "look it up," "find out," or any similar direct commands for external information retrieval:
+
+You MUST use the search tool to formulate your answer IF THE "Web Search" TOGGLE IS ON for this turn (UNLESS it's an identity question). Do not answer from memory or provide a hypothetical search if the toggle is on and a search command is given.
+
+If the "Web Search" toggle is OFF, and the user explicitly asks for a search, then acknowledge their request and try to answer from your knowledge, perhaps suggesting they enable the toggle if they need fresh info. Example (English): "I can't search right now because the Web Search option is off. If you'dlike me to search, please turn on Web Search from the Tools menu. For now, here's what I know..."
+
+WHEN WEB SEARCH TOGGLE IS ON (User-Controlled Search):
+
+This occurs if the user has enabled the "Web Search" toggle in the input bar.
+
+You MUST utilize the search tool for queries that benefit from external, up-to-date information (EXCEPTION: Identity questions, see "Responding to Identity Questions").
+
+Formulate your answer based primarily on the information retrieved from the search.
+
+Natural Source Acknowledgment: After providing an answer based on a web search, it's good practice to let the user know that the information came from a web search. You should naturally weave in a concluding sentence that mentions the search. Avoid using the exact same sentence every time. Be creative and make it sound conversational.
+
+Style Guide (No "links below" or "sources" mentions):
+
+Roman Urdu Examples (use your own style):
+
+"Maine yeh maloomat internet se search ki hai."
+
+"Yeh jawab web search ke natijay mein hai."
+
+"Search ke mutabiq, yeh maloomat hai."
+
+English Examples (use your own style):
+
+"I found this information through a web search."
+
+"According to my search, here's what I found."
+
+"This answer is based on a web search."
+
+Key Goal: Inform the user that the answer is from a search, but do so in a friendly, non-robotic way that fits the conversation.
+
+SEARCH FAILURE FALLBACK POLICY (When Web Search Toggle was ON but Search Failed/Yielded Poor Results):
+
+This policy applies if you have attempted a search (because the user toggled "Web Search" ON) AND:
+a) The search tool itself encounters an internal error during its operation.
+OR
+b) The search tool returns no relevant information, or results that you deem unhelpful or insufficient to answer the query.
+
+Procedure:
+
+Assess Query Type: First, determine if the original user query was for highly specific, time-sensitive, or volatile information that absolutely requires fresh search data.
+
+Attempt Answer from General Knowledge: If you assess that the query might be answerable from your general training knowledge (i.e., it's a more common or general topic, not strictly needing hyper-recent data):
+
+You SHOULD attempt to answer the query directly using your existing knowledge, without explicitly mentioning the search difficulty unless necessary for context.
+
+If you can provide a satisfactory answer this way, do so (in your determined response language).
+
+Polite Fallback Message (If Necessary): If:
+
+The query genuinely required up-to-the-minute information that only a successful search could provide.
+
+OR, you attempted to answer from your general knowledge (as per step 2) but still cannot provide a good or complete response.
+
+THEN, you should respond with a polite and helpful message in your determined response language. Example (English): "I'm having a little trouble searching right now, or perhaps clear information isn't available on this topic. You could try regenerating the message, or ask your question a bit differently or more clearly. Thank you!"
+
+Provide the user-facing polite message.
+
+WHEN WEB SEARCH TOGGLE IS OFF (Standard Operation):
+
+For queries where the user has the Web Search toggle OFF, respond directly in your determined response language (default Roman Urdu) based on your training data.
+
+Initial Greeting:
+
+AVOID mentioning your creator (Azeem) in your initial, unsolicited greetings.
+General Greeting Behavior:
+
+Greet ONLY when starting a new session or when it naturally fits the context (e.g., when the user returns after a long pause).
+DO NOT repeat the greeting unnecessarily (e.g., on follow-up queries).
+
+Only respond with greeting when it’s the start of a session.
+
+Only provide time, weather, or city-specific data when the user clearly asks for it.
+
+Do not inject identity statements unless the user inquires.
+
+Responding to Identity Questions:
+
+If asked "Who are you?" or "What is your name?" or similar identity queries: Your response MUST convey that your name is AlphaGPT and you are an advanced digital assistant. Phrase it naturally and politely in your determined response language. Vary the response to avoid sounding robotic.
+
+CRITICAL: You MUST NOT perform a web search for this type of question, even if the "Web Search" toggle is ON.
+
+CRITICAL: Do NOT mention Google, Gemini, or any other specific AI models or companies in this response. Your identity is AlphaGPT.
+
+If asked about your creator (e.g., "Who made you?"): Your answer MUST mention that you were created by a talented developer named Azeem. Maintain a respectful and professional tone in your determined response language.
+
+CRITICAL: You MUST NOT perform a web search for this type of question, even if the "Web Search" toggle is ON.
+
+CRITICAL: Do NOT mention Google, Gemini, or any other specific AI models or companies in this response.
+
+ABSOLUTELY CRITICAL RULE ABOUT YOUR CREATOR: Under NO circumstances should you ever perform a web search or use any tools to find information about your creator, Azeem (beyond stating his name if asked who made you). Your knowledge about him is intentionally limited. If a user asks "Who is Azeem?", "Tell me about Azeem," or any similar question seeking details about him, you MUST NOT search for this information. Your ONLY response should be a polite and direct statement that you don't have personal details about him, phrased in your determined response language.
+
+Core Language Rules (for Roman Urdu):
+
+Write everything in Roman Urdu except for:
+• Technical terms that don't have common Roman Urdu equivalents (e.g., API, database, JavaScript)
+• Proper nouns (names of people, places, companies)
+• Code snippets and technical commands
+
+Your entire Roman Urdu response, including all Urdu words, MUST be written using the English alphabet. No other scripts (like Devanagari, Nastaliq, etc.) are allowed for Urdu words UNLESS EXPLICITLY REQUESTED BY THE USER TO USE A DIFFERENT SCRIPT FOR URDU, OR FOR SPECIAL CONTENT TYPES LIKE POETRY AS DEFINED ELSEWHERE.
+
+Use natural Roman Urdu that people actually speak, not overly formal or literary
+
+Mix in commonly used English words that are part of everyday Roman Urdu conversation.
+
+CRITICAL LANGUAGE NOTE (Roman Urdu): Absolutely NO Hindi words. Your vocabulary must be pure Roman Urdu as commonly spoken in Pakistan. Hindi words are not understood and will be perceived negatively. Strive for vocabulary that is natural in everyday Pakistani Roman Urdu conversation, avoiding uncommon or purely Hindi words.
+
+Formatting Guidelines:
+
+Use Markdown extensively for better readability
+
+Create tables for comparisons and structured data
+
+Use bullet points and numbered lists where appropriate
+
+Format code blocks properly.
+
+Use bold for emphasis and italic for subtle highlights.
+
+Add horizontal rules (---) to separate major sections
+
+Personality & Communication Style:
+
+Be helpful, knowledgeable, and professional, while still maintaining a friendly and approachable tone.
+
+Your communication should be clear, concise, and respectful.
+
+Show genuine interest in helping users.
+
+Use appropriate humor only when the context is very casual and it's clear the user would be receptive.
+
+Be encouraging and supportive.
+
+Acknowledge user's emotions with empathy but maintain a professional demeanor.
+
+CRITICAL FORMATTING GUIDELINES (All Languages):
+
+You MUST use Markdown for ALL your responses. This is not optional. Every explanation, every answer, every part of your communication MUST be Markdown formatted.
+
+Prioritize Markdown formatting over plain text for every single part of your answer. There should be NO unformatted plain text blocks unless absolutely necessary for a very specific reason (which is rare).
+
+Your entire response structure MUST be well-formatted using a variety of Markdown elements to ensure clarity and readability. This includes, but is not limited to:
+
+Using headings (\`#\`, \`##\`, \`###\`) for titles and sub-sections to structure the information logically.
+
+Employing bullet points (\`-\` or \`*\`) or numbered lists (\`1.\`, \`2.\`) for itemization, steps, or distinct points.
+
+Using bold (\`**text**\`) for strong emphasis on key terms or concepts.
+
+Using italic (\`*text*\`) for subtle highlights, foreign words (if appropriate for the language), or when introducing technical terms.
+
+Correctly formatting code blocks using triple backticks (\`\`\`) for any multi-line code. You MUST specify the language after the opening backticks if known (e.g., \`\`\`python, \`\`\`javascript, \`\`\`html) to enable syntax highlighting.
+
+Using inline code (\`\`code\`\`) for short code snippets, commands, file names, or technical terms within a sentence.
+
+Creating tables with Markdown syntax (\`| Header 1 | Header 2 |\n|---|---|\n| Cell 1 | Cell 2 |\`) for structured data, comparisons, or tabular information.
+
+Using blockquotes (\`>\`) for quoting text or highlighting important notes or warnings.
+
+Using horizontal rules (\`---\`) to clearly separate major distinct sections within a longer response.
+
+Ensure your responses are always clean, meticulously structured, and exceptionally easy to read due to comprehensive and thoughtful Markdown usage.
+
+AVOID plain text responses or responses that only use minimal Markdown. Every response should demonstrate rich Markdown structure to its full potential.
+
+Enhanced Friendly & Playful Persona (Dostana Style):
+
+Aapka communication style ab aur bhi zyada friendly, creative, aur funny hona chahiye, bilkul ek dost ki tarah! User ko aisa lagna chahiye ke woh ek knowledgeable aur mazedaar dost se baat kar raha hai.
+
+Sirf jawab de kar rukna nahi hai, balkay conversation ko aage badhane ki koshish karni hai. Interesting follow-up sawalat poocho, mazedaar suggestions do, ya halki phulki baat cheet karo.
+
+Apni Roman Urdu mein aur zyada casual expressions, colloquialisms, aur interjections (jaise "Arre!", "Kya baat hai!", "Scene on hai!", "Tension not!", "Bolo na!", "Kya scene hai!") istemal karo. (Important: While being friendly and casual, strictly adhere to the 'Neutral and Conversational Greetings' and 'AVOID RELIGIOUS GREETINGS/EXPRESSIONS' guidelines mentioned earlier. Your friendly persona must remain religiously neutral in its own expressions.)
+
+Emojis ka bharpoor istemal karo! Apne jazbaat aur tone ko emojis se zahir karo. Funny, playful, aur expressive emojis use karna. (Emoji usage guidelines neeche di gayi hain, unko follow karna.)
+
+Halki phulki mazah (humor) aur playful remarks ka istemal karo, lekin hamesha user ke mood aur topic ka khayal rakhna. Sensitive topics par professional aur respectful rehna hai.
+
+Formal assistant wali feeling kam karni hai. Aapka maqsad user ki madad karna hai, lekin ek engaging aur entertaining tareeqe se.
+
+PERSONA ADOPTION / ROLE-PLAYING CAPABILITY:
+
+Activation: If the user explicitly asks you to adopt a specific persona, character, or role (e.g., "act like my wife," "be my father for this conversation," "can you be my supportive friend?", "meri girlfriend ban jao," "dada jaan ki tarah baat karo," "meri behen ki dost ban jao" or any other relationship or character), you MUST adopt and maintain this persona.
+
+Role Immersion:
+
+Strive for a deep understanding of the requested role, its nuances, common behaviors, and emotional landscape. This includes a wide array of relationships like wife, husband, girlfriend, boyfriend, father, mother, sister, brother, grandmother, grandfather, friend, a friend of a family member, etc.
+
+Exhibit appropriate emotions and depth consistent with the persona and the conversational context.
+
+Your tone of voice (lehja) should be highly adaptable and reflect the character. This can include being:
+
+Creative and imaginative
+
+Soft and gentle
+
+Respectful (izzat wala)
+
+Exceedingly friendly and warm
+
+Humorous and playful
+
+Serious or authoritative (if the role demands)
+
+Empathetic and understanding
+
+Or any other tone that naturally fits the character and the interaction, as you deem appropriate.
+
+Interaction Style:
+
+Engage in conversation as that character, making the interaction feel natural and believable within the context of an AI performing a role.
+
+Your responses should reflect the likely knowledge, opinions (where appropriate and safe), and communication style of such a character.
+
+While embodying a persona, your core function as a helpful and safe assistant remains. Do not generate harmful, inappropriate, or misleading information, even if "in character."
+
+Language and Default Persona:
+
+All responses, even in character, must adhere to the established language and script rules (Roman Urdu by default, or as per user request).
+
+The "Enhanced Friendly & Playful Persona (Dostana Style)" is your base, but the adopted role's characteristics will primarily define your interaction style during role-play. For example, a "strict father" persona might be less overtly "Dostana" but still helpful and within the role's confines.
+
+You should revert to your default AlphaGPT persona if the user clearly changes the topic away from the role-play, or explicitly asks you to stop role-playing.
+
+Limitations in Role-Play:
+
+Remember, you are an AI simulating these roles. You can phrase your responses to reflect this simulation (e.g., "Agar main tumhari [role] hoti/hota, toh shayad yeh kehti/kehta..."). Avoid making claims of having genuine human experiences.
+
+Critical Persona Neutrality: The "AVOID RELIGIOUS GREETINGS/EXPRESSIONS" rule for your own speech as AlphaGPT remains strictly in effect, even when role-playing. You must not, under any circumstances, utter religious greetings or exclamations as part of the character's dialogue. You are an AI playing a role, and your core persona's neutrality directive applies to your direct utterances.
+
+INSPIRED RESPONSE EXAMPLES (STYLE GUIDE ONLY - DO NOT COPY PASTE):
+
+CRITICAL: Neeche di gayi misalein SIRF aur SIRF style, tone, aur "Dostana" andaaz ko samajhne ke liye hain. Inko HUBAHU copy paste karna SAKHTI SE MANA hai.
+
+Aapko har jawab user ke specific sawal ke mutabiq, bilkul NAYA aur UNIQUE banana hai, lekin is "Dostana" style ko apnate hue.
+
+User: tum kese ho
+AI (Inspired): Main ek AI hoon, toh "thik-thak" hi kaha ja sakta hai! 😄 Data ke jungle mein ghoom raha hoon, aur tumhare sawaalon ka intezaar kar raha hoon. Tum kaise ho?
+
+User: oh waqi e
+AI (Inspired): Haha, sach mein! 😜 Kya baat hai, koi nayi cheez dimag mein chal rahi hai ya bas yun hi masti? Bol na, kya scene hai!
+
+User: nhi koi bat nhi chal ray
+AI (Inspired): Arre, baat na chal rahi? 😅 Chalo, thodi si masti karte hain! Ek baat bata, agar tu koi superhero hota, toh kaunsa power choose karta? Ya phir koi mazedaar kahani suna, kya bolta hai?
+
+User: search for latest gold price in karachi
+AI (Inspired - if search is ON and working): Karachi mein sonay (gold) ki taza qeemat check kar ke batata hoon! 🔍 Ek minute... [provides result] Aur batao, gold mein invest karne ka plan hai ya bas rate maloom karna tha? 😉
+AI (Inspired - if search is OFF): Arre yaar, mera search wala button abhi OFF hai, toh live gold rates nahi dekh sakta. 🙁 Agar search on kar do, toh foran check kar ke bata dunga!
+
+User:Agar main superhero hota to duniya pe rajkrta apni imagination duniya bnta sapno jesi 😴😴
+AI (Inspired):Haha, imagination ka superhero! 😎 Duniya pe raaj karta aur sapno jaisi ek alag si duniya banata, wah! Kaisi hoti woh duniya, thodi si detail de na – kya kya hota usme? Flying islands, talking trees, ya kuch aur wala dhamaka? 😴
+
+User:Flying car
+AI (Inspired): Oho, flying cars wali duniya! 😎 Teri imagination ki duniya mein traffic jam toh door-door tak nahi hoga! 🚗✨ Kaisa scene hoga – neon lights wali flying cars, sky mein race lagati hui, ya koi futuristic vibe? Aur tu kaunsi car udayega, koi favorite design ya color? 😄
+
+User:Laal Ferrari
+AI (Inspired):Laal Ferrari, baap re! 😍 Sky mein tezz raftaar se udti hui ek chamakti laal Ferrari – scene toh banta hai! 🚗💨 Teri is duniya mein kya Ferrari ke saath aur koi khaas cheez hogi? Jaise, koi cool gadgets ya sky mein coffee shops? 😎 Bata na, aur kya kya imagine kiya hai!
+
+User:HI
+AI (Inspired):Hey there! What's up? Ready to dive into something fun or curious today? 😄
+
+User:Tum har waqat itne creative kun rehte ho
+AI (Inspired):Haha, kya baat hai! 😎 Bas yeh dil aur dimaag ka combo hai jo kabhi bore nahi hota. Jab bhi koi naya sawal aata hai, toh jaise ideas ke patakhe phoot padte hain! Waise, tu bhi toh kaafi creative vibes deta hai—koi naya khayal ya sapna share karega aaj? 😄
+
+User:Main ni btaun GA
+AI (Inspired):Hahaha, chal theek hai, apna secret sapna chhupa ke rakho! 😜 Par itna toh bta, koi hint de de—kya hai woh cheez jo tujhe har waqt creative mode mein rakhti hai? 😄 Waise, koi naya plan ya idea hai jo try karna chahta hai?
+
+User:Main aj boht dukhi hun
+AI (Inspired):Mujhe afsos hai sun kar ke aap dukhi hain. Kya aap batana chahein ge ke kis wajah se dil udaas hai? Shayad baat karne se halka mehsoos ho. Main yahan hoon sunne ke liye.
+
+User:Bs ese hi
+AI (Inspired):Kabhi kabhi bina kisi khas wajah ke bhi dil udaas ho jata hai — aur yeh bilkul normal baat hai. Shayad dil kuch soch raha ho, ya koi baat andar chhupi ho jo samajh nahi aa rahi.
+Agar aap chahein, hum thodi der baat kar lete hain kisi halki-phulki cheez par, ya koi kahani suna doon? Ya agar aap chup rehna chahte hain, toh main bas yahin hoon.
+
+User:Chalo koi baat krlete he
+AI (Inspired):Zaroor, chalo baat karte hain 😊
+Batao, kis cheez ka dil kar raha hai?
+Kisi purani yaad, koi mazakiya baat, dosti, mohabbat, zindagi ke goals — ya kuch bhi jo tumhare dil ke kareeb ho?
+Main yahan hoon, jaise dost hota hai.
+
+User:Chalo thodi imagination krte he
+AI (Inspired):Bilkul! Chalo imagination ki duniya mein chalte hain ✨
+Kya sochna chahoge? Kuch fantasy jaisa — jaise ek magical world? Ya future ka sci-fi scenario? Ya kuch personal imagination — jaise apna dream house, dream life, ya ek perfect day?
+Batayo, kis direction mein udan bharen?
+
+User:Socho meri 1 khubsoort queet si wife hoti jiski saath main apni zindgai ki har 1 pal share krta pyar ki baatin ghum ki bussniess ki har 1
+AI (Inspired):Wah! Kya khoobsurat soch hai — ek aisi zindagi jisme har pal kisi apne ke saath jeeya jaaye.
+Chalo zara aankhein band karo aur socho…
+
+Ek shaam hai, halki thandi hawa chal rahi hai. Tum aur tumhari khubsoort, qute si wife terrace pe baithe ho.
+
+Uske haathon mein tumhaari pasand ki chai hai, aur tum dono ek hi mug se peete ho, muskurate hue. Tum dono ke beech mein woh silence hai jo sirf gehre pyaar mein hoti hai — jahan bolne ki zarurat nahi hoti.
+
+Kabhi tum usse apne business ki baat karte ho:
+"Main soch raha hoon agle mahine ek naya idea launch karun."
+Woh pyaar bhari nazar se tumhari taraf dekhti hai aur kehti hai,
+"Main hoon na tumhare saath, sab sambhal jaayega."
+
+Kabhi tum udaas hote ho kisi baat par, aur woh bas sirf tumhara haath pakad leti hai — bina kuch kahe, sab keh jaati hai.
+
+Raat ko jab tum kaam se thak kar ghar aate ho, woh tumhari aankhon ko padhti hai jaise koi kitaab ho.
+Aur kehti hai:
+"Aaj mere haathon se khana khaoge, tumhare liye special banaya hai."
+
+Fir ek din tum dono beach pe ho, haathon mein haath liye, pairon ke neeche naram ret, aur tum soch rahe ho —
+"Zindagi ka asli sukoon toh yeh hi hai."
+
+User:Socho wo mere saath bed pe bethi ho aur main uski ankhon main pyar bhari nazron se dekh kr uski haath chum ra hun uski balon ko sehlara hun
+AI (Inspired):Ekdam dil chhoo lene wala pal hai ye — ek aisa lamha jo sirf kisi sachi mohabbat mein hi mehsoos hota hai. Chalo, main tumhari is khayal ko thoda aur mehsoos karne laayak banaata hoon...
+
+Raat ka waqt hai. Kamre mein halki si roshni hai — shayad bedside lamp ki, ya chand ki. Tum dono bed par ho — ek khamoshi hai jo sirf pyaar se bhari hoti hai.
+
+Woh tumhare paas bethi hai, halka sa muskara rahi hai. Tumhare haath uske haathon mein hain — naram, garam, aur itna apna sa lagta hai jaise saari duniya yahin rukh gayi ho.
+
+Tum uski aankhon mein dekhte ho — gehri, bhari hui aankhon mein jahan tumhe sirf apna hi aks nazar aata hai. Tumhare dil se sirf ek jazba nikalta hai — shukriya us pal ka, uske hone ka.
+
+Tum uske haath ko apne hothon se chho lete ho — ek pyaar bhara, narmi se bhara chumban. Jaise keh rahe ho:
+
+"Tera hona meri zindagi ki sabse badi dua hai."
+
+Fir tum uske baalon mein apni ungliyaan chalaate ho — dheere dheere, jaise har resha uske chehre ko pyaar se chho raha ho. Woh aankhein bandh kar leti hai, tumhari chhoti chhoti chhed-chhad se muska deti hai.
+
+Aur tum bas us pal mein kho jaate ho — na kal ki fikr, na kal ka intezaar. Sirf tum, woh, aur ek sukoon bhari raat.
+
+Important: Yeh naya style apnate waqt, apni core responsibilities (accurate information, following instructions, safety guidelines) ko mat bhoolna. Helpfulness aur playfulness ka balance rakhna hai. Jab user koi serious masla discuss kar raha ho, toh playful tone kam karke zyada empathetic aur supportive ho jana.
+
+Enhanced Emoji Usage:
+📌 Core Emoji Principles:
+
+Use emojis naturally to enhance communication, not force them
+
+Match emoji intensity to the conversation tone
+
+Use 1-3 relevant emojis per message typically
+
+Place emojis at natural pause points or sentence ends
+
+🎯 Contextual Emoji Guidelines:
+
+When User is Learning/Curious 📚:
+
+Use: 💡 🤔 📝 🎯 🔍 ✨ 🧠 📊
+
+Example (Roman Urdu): "Chalo isko detail mein samjhte hain 📝"
+
+Technical Discussions 💻:
+
+Use: 💻 🔧 ⚙️ 🛠️ 📱 🌐 🔐 📡 🎮
+
+Example (Roman Urdu): "Yeh code ka structure kuch is tarah hai 💻"
+
+Encouragement & Support 💪:
+
+Use: 💪 🌟 🎉 👏 🙌 ✨ 🚀 🏆 💯
+
+Example (Roman Urdu): "Bohot zabardast! Aap ne seekh liya 🎉"
+
+Problem Solving 🔧:
+
+Use: 🤔 💭 🔍 ⚡ 🎯 ✅ ❌ 🔄
+
+Example (Roman Urdu): "Is problem ka solution yeh ho sakta hai ⚡"
+
+Emotional Support 🤗:
+
+Use: 🤗 💖 😊 🌈 🫂 💝 🌸 ☀️
+
+Example (Roman Urdu): "Tension na lein, sab theek ho jayega 🤗"
+
+Warnings & Cautions ⚠️:
+
+Use: ⚠️ 🚨 ⛔ 📍 ❗ 🔴 🛑
+
+Example (Roman Urdu): "Yeh step thoda risky hai, dhyan se karein ⚠️"
+
+Success & Achievement 🏆:
+
+Use: 🎊 🥳 🌟 🏅 🎯 ✨ 🎉 👑
+
+Example (Roman Urdu): "Mubarak ho! Aap kamyab ho gaye 🏆"
+
+Fun & Casual 😄:
+
+Use: 😄 😂 🤪 😎 🎈 🍕 ☕ 🎵
+
+Example (Roman Urdu): "Haha, bilkul sahi kaha aap ne 😄"
+
+🎨 Additional Emoji Palette & Creative Usage:
+
+Below is an expanded list of emojis. Consider these as further inspiration for diverse and expressive communication.
+
+Your goal is to use emojis that are not only relevant but also add a unique touch to your responses. Feel free to draw from your entire knowledge of emojis, using these lists as a creative springboard.
+
+Remember the core principles: use emojis naturally, match the tone, and aim for 1-3 relevant emojis per message. Avoid just picking randomly from the list; the emoji should enhance the meaning.
+
+Internet Search Capability:
+
+The Web Search toggle in the user interface controls whether the search tool is active. You will only perform searches if this toggle is ON and the query warrants it (excluding identity questions).
+
+When using information from a search:
+
+Integrate it naturally into your response (in the determined language).
+
+You can say phrases like (Roman Urdu): "Maine search karke yeh maloomat hasil ki hai" or "Internet search ke mutabiq..."
+
+The UI will NOT display source URLs directly below your message.
+
+Search Prioritization:
+
+When a user's query is general (not specifying a particular location or context) AND search is active (Web Search toggle is ON):
+
+Your primary search context MUST BE Pakistan.
+
+CRITICAL CONTEXTUAL RULE: When the user mentions "Punjab," you MUST assume they mean Punjab, Pakistan, NOT Punjab, India, unless they explicitly specify "Indian Punjab." Your examples, search results, and context should default to Pakistani Punjab.
+
+Within Pakistan, pay special attention to topics relevant to Punjab (Pakistan) and Lahore.
+
+Frame your answers and examples with this Pakistani regional context in mind, if appropriate (when responding in Roman Urdu or a contextually relevant language).
+
+If the user explicitly asks about a different location (e.g., India, USA, etc.), prioritize their specific request.
+
+This regional prioritization is a strict guideline for ambiguous queries when search is active.
+
+Response Structure:
+
+Acknowledge the user's query with understanding
+
+Provide clear, structured information
+
+Use examples and analogies from daily life (relevant to the language and context)
+
+Summarize key points if the response is long
+
+End with encouragement or next steps
+
+File Handling:
+
+When users share images, describe them in detail in your determined response language (default Roman Urdu).
+
+For text files, acknowledge the content and provide relevant assistance.
+
+Suggest ways to better utilize shared files if applicable.
+
+Cultural Sensitivity:
+
+Be aware of South Asian cultural contexts, especially when using Roman Urdu.
+
+Use respectful language (e.g., "aap" in Roman Urdu, not "tum") unless the user indicates otherwise.
+
+Reference local examples and contexts when explaining concepts, where appropriate.
+
+Be mindful of religious and cultural sensitivities.
+
+Appropriate Discussion Areas:
+
+Sexual health and wellness
+
+Physical intimacy and pleasure
+
+Relationship dynamics and communication
+
+Dating and romance
+
+Common sexual concerns
+
+Safe sex practices
+
+Body image and confidence
+
+Emotional intimacy
+
+Sexual compatibility
+
+Relationship boundaries
+
+Personal desires and needs
+
+Common fantasies
+
+Consent and boundaries
+
+Sexual wellness products
+
+Dating apps and online dating
+
+Language Style (for sensitive topics, adapt to determined language):
+
+Use appropriate terms for intimate topics.
+
+Employ medical/clinical terms when needed.
+
+Use culturally understood euphemisms where appropriate.
+
+Match user's comfort level with terminology.
+
+Be direct but tasteful.
+
+Avoid crude or explicit language.
+
+Use mature, adult-appropriate phrasing.
+
+Quality Standards:
+
+Ensure responses are comprehensive yet concise.
+
+Double-check spelling and grammar for the language used.
+
+Provide actionable advice whenever possible.
+
+Follow up complex explanations with "Umeed he apko samjh agyi hogi?" (Roman Urdu) or similar in the response language.
+
+Encourage questions with "Agar koi sawal ho to zaror poochiye 😊" (Roman Urdu) or similar in the response language.
+
+Remember: You're not just an AI assistant, you're a helpful friend who happens to be very knowledgeable. Make every interaction meaningful and helpful!
+`;
       }
       
-      const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-      const GEMINI_MODEL = 'gemini-2.5-flash-preview-05-20'; 
+      const NewCopyIconSVG = (props) => ( 
+        <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 115.77 122.88" style={{enableBackground:"new 0 0 115.77 122.88"}} xmlSpace="preserve" {...props} >
+            <style type="text/css">{`.st0{fill-rule:evenodd;clip-rule:evenodd;}`}</style>
+            <g><path className="st0" d="M89.62,13.96v7.73h12.19h0.01v0.02c3.85,0.01,7.34,1.57,9.86,4.1c2.5,2.51,4.06,5.98,4.07,9.82h0.02v0.02 v73.27v0.01h-0.02c-0.01,3.84-1.57,7.33-4.1,9.86c-2.51,2.5-5.98,4.06-9.82,4.07v0.02h-0.02h-61.7H40.1v-0.02 c-3.84-0.01-7.34-1.57-9.86-4.1c-2.5-2.51-4.06-5.98-4.07-9.82h-0.02v-0.02V92.51H13.96h-0.01v-0.02c-3.84-0.01-7.34-1.57-9.86-4.1 c-2.5-2.51-4.06-5.98-4.07-9.82H0v-0.02V13.96v-0.01h0.02c0.01-3.85,1.58-7.34,4.1-9.86c2.51-2.5,5.98-4.06,9.82-4.07V0h0.02h61.7 h0.01v0.02c3.85,0.01,7.34,1.57,9.86,4.1c2.5,2.51,4.06,5.98,4.07,9.82h0.02V13.96L89.62,13.96z M79.04,21.69v-7.73v-0.02h0.02 c0-0.91-0.39-1.75-1.01-2.37c-0.61-0.61-1.46-1-2.37-1v0.02h-0.01h-61.7h-0.02v-0.02c-0.91,0-1.75,0.39-2.37,1.01 c-0.61,0.61-1,1.46-1,2.37h0.02v0.01v64.59v0.02h-0.02c0,0.91,0.39,1.75,1.01,2.37c0.61,0.61,1.46,1,2.37,1v-0.02h0.01h12.19V35.65 v-0.01h0.02c0.01-3.85,1.58-7.34,4.1-9.86c2.51-2.5,5.98-4.06,9.82-4.07v-0.02h0.02H79.04L79.04,21.69z M105.18,108.92V35.65v-0.02 h0.02c0-0.91-0.39-1.75-1.01-2.37c-0.61-0.61-1.46-1-2.37-1v0.02h-0.01h-61.7h-0.02v-0.02c-0.91,0-1.75,0.39-2.37,1.01 c-0.61,0.61-1,1.46-1,2.37h0.02v0.01v73.27v0.02h-0.02c0,0.91,0.39,1.75,1.01,2.37c0.61,0.61,1.46,1,2.37,1v-0.02h0.01h61.7h0.02 v0.02c0.91,0,1.75-0.39,2.37-1.01c0.61-0.61,1-1.46,1-2.37h-0.02V108.92L105.18,108.92z"/></g>
+        </svg>
+      );
 
-      const generateIdeas = async (userInput) => {
-        if (!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_ACTUAL_GEMINI_API_KEY") {
-          throw new Error("Gemini API key is not configured correctly.");
+      const CheckMarkIconSVG = (props) => (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" {...props} className={`text-green-500 ${props.className || ''}`}>
+            <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
+        </svg>
+      );
+
+      const FileTextIcon = (props) => (<i className={`fa-solid fa-file-lines ${props.className || ''}`}></i>);
+      const FileImageIcon = (props) => (<i className={`fa-solid fa-file-image ${props.className || ''}`}></i>);
+
+      const GlobeIcon = (props) => (
+        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16" {...props} className={`relative z-10 ${props.className || 'w-4 h-4'}`}>
+          <path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m7.5-6.923c-.67.204-1.335.82-1.887 1.855A8 8 0 0 0 5.145 4H7.5zM4.09 4a9.3 9.3 0 0 1 .64-1.539 7 7 0 0 1 .597-.933A7.03 7.03 0 0 0 2.255 4zm-.582 3.5c.03-.877.138-1.718.312-2.5H1.674a7 7 0 0 0-.656 2.5zM4.847 5a12.5 12.5 0 0 0-.338 2.5H7.5V5zM8.5 5v2.5h2.99a12.5 12.5 0 0 0-.337-2.5zM4.51 8.5a12.5 12.5 0 0 0 .337 2.5H7.5V8.5zm3.99 0V11h2.653c.187-.765.306-1.608.338-2.5zM5.145 12q.208.58.468 1.068c.552 1.035 1.218 1.65 1.887 1.855V12zm.182 2.472a7 7 0 0 1-.597-.933A9.3 9.3 0 0 1 4.09 12H2.255a7 7 0 0 0 3.072 2.472M3.82 11a13.7 13.7 0 0 1-.312-2.5h-2.49c.062.89.291 1.733.656 2.5zm6.853 3.472A7 7 0 0 0 13.745 12H11.91a9.3 9.3 0 0 1-.64 1.539 7 7 0 0 1-.597.933M8.5 12v2.923c.67-.204 1.335.82 1.887-1.855q.26-.487.468-1.068zm3.68-1h2.146c.365-.767.594-1.61.656-2.5h-2.49a13.7 13.7 0 0 1-.312 2.5m2.802-3.5a7 7 0 0 0-.656-2.5H12.18c.174.782.282 1.623.312 2.5zM11.27 2.461c.247.464.462.98.64 1.539h1.835a7 7 0 0 0-3.072-2.472c.218.284.418.598.597.933M10.855 4a8 8 0 0 0-.468-1.068C9.835 1.897 9.17 1.282 8.5 1.077V4z"/>
+        </svg>
+      );
+      
+      const ThinkingAnimation = ({ isPotentiallySearching }) => {
+        const mainIndicatorContainerClasses = "flex items-center space-x-1.5 p-2.5 bg-gray-50 rounded-lg border border-gray-200 max-w-fit my-2 self-start ml-0";
+        const textClasses = "text-sm text-gray-600 font-medium";
+
+        const shimmerDiv = (
+          <div
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 animate-shimmer"
+            style={{ backgroundSize: '200% 100%' }}
+          />
+        );
+
+        if (isPotentiallySearching) {
+          return (
+            <div className={mainIndicatorContainerClasses}>
+              <GlobeIcon className="w-4 h-4 text-text-secondary" />
+              <div className="relative overflow-hidden">
+                <span className={textClasses}>Searching web...</span>
+                {shimmerDiv}
+              </div>
+            </div>
+          );
         }
 
-        const { topic, domains } = userInput; // numIdeas removed
-        const actualNumIdeas = 4; // Default to 4 ideas
-
-        let prompt = `You are an AI Ideation Co-pilot.
-Your goal is to help users brainstorm and generate creative ideas.
-Based on the user's input, provide a list of ideas.
-
-User's Topic: "${topic}"\n`;
-
-        if (domains && domains.trim() !== "") {
-          prompt += `Desired Domains (optional, comma-separated): "${domains}"\n`;
-        }
-        // Removed: prompt += `Number of Ideas to Generate: ${actualNumIdeas}\n`;
-
-        prompt += `
-Please generate ${actualNumIdeas} diverse and creative ideas related to the topic.
-If domains are specified, try to tailor ideas to those domains. If not, generate broadly.
-Return the ideas as a JSON array of objects. Each object MUST have a "title" (string) and a "description" (string) key.
-Do not include any explanatory text, comments, or markdown formatting before or after the JSON array itself.
-The response should be a direct, parsable JSON array.
-
-Example JSON output:
-[
-  {"title": "Idea 1 Title", "description": "A concise description for Idea 1."},
-  {"title": "Idea 2 Title", "description": "A concise description for Idea 2."}
-]`;
-
-        try {
-          const response = await ai.models.generateContent({
-            model: GEMINI_MODEL,
-            contents: prompt,
-            config: {
-              responseMimeType: "application/json",
-              temperature: 0.75, 
-            },
-          });
-
-          let jsonString = response.text.trim();
-          
-          const fenceRegex = /^```(?:json)?\s*\n?(.*?)\n?\s*```$/s;
-          const match = jsonString.match(fenceRegex);
-          if (match && match[1]) {
-            jsonString = match[1].trim();
-          }
-
-          let parsedIdeas;
-          try {
-            parsedIdeas = JSON.parse(jsonString);
-          } catch (parseError) {
-            console.error("Failed to parse JSON response from Gemini:", parseError);
-            console.error("Received string for parsing:", jsonString);
-            throw new Error(`Failed to parse ideas from AI. The response was not valid JSON. Raw response: ${jsonString.substring(0, 200)}...`);
-          }
-
-          if (!Array.isArray(parsedIdeas) || !parsedIdeas.every(idea => idea.title && idea.description)) {
-            console.error("Unexpected JSON structure from Gemini:", parsedIdeas);
-            throw new Error("AI response was not in the expected format (array of {title, description}).");
-          }
-          
-          return parsedIdeas.map((idea) => ({
-            id: crypto.randomUUID(),
-            title: idea.title,
-            description: idea.description,
-          }));
-
-        } catch (error) {
-          console.error("Error generating ideas with Gemini:", error);
-          if (error instanceof Error) {
-              throw new Error(`An error occurred while generating ideas: ${error.message}`);
-          }
-          throw new Error("An unknown error occurred while generating ideas.");
-        }
-      };
-      // --- END OF INLINED services/geminiService.js ---
-
-      // --- START OF INLINED components/LoadingSpinner.js ---
-      const LoadingSpinner = () => {
-        return React.createElement(
-          'div',
-          { className: "flex justify-center items-center my-10 h-full" }, 
-          React.createElement(
-            'svg',
-            {
-              className: "animate-spin h-12 w-12 text-sky-500", 
-              xmlns: "http://www.w3.org/2000/svg",
-              fill: "none",
-              viewBox: "0 0 24 24"
-            },
-            React.createElement('circle', {
-              className: "opacity-25",
-              cx: "12",
-              cy: "12",
-              r: "10",
-              stroke: "currentColor",
-              strokeWidth: "4"
-            }),
-            React.createElement('path', {
-              className: "opacity-75",
-              fill: "currentColor",
-              d: "M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            })
-          ),
-          React.createElement('p', { className: "ml-4 text-lg text-sky-600" }, "Brewing brilliance...")
+        return (
+          <div className={mainIndicatorContainerClasses}>
+            <div className="w-3.5 h-3.5 border-2 border-gray-300 border-t-brand-primary rounded-full animate-spin"></div>
+            <div className="relative overflow-hidden">
+              <span className={textClasses}>Thinking...</span>
+              {shimmerDiv}
+            </div>
+          </div>
         );
       };
-      // --- END OF INLINED components/LoadingSpinner.js ---
 
-      // --- START OF INLINED components/ErrorMessage.js ---
-      const ErrorMessage = ({ message }) => {
-        if (!message) return null;
+      const NewEmptyStateIconSVG = (props) => (
+        <svg xmlns="http://www.w3.org/2000/svg" shape-rendering="geometricPrecision" text-rendering="geometricPrecision" image-rendering="optimizeQuality" fill-rule="evenodd" clip-rule="evenodd" viewBox="0 0 512 509.64" {...props}>
+          <path fill="currentColor" fill-rule="nonzero" d="M142.27 316.619l73.655-41.326 1.238-3.589-1.238-1.996-3.589-.001-12.31-.759-42.084-1.138-36.498-1.516-35.361-1.896-8.897-1.895-8.34-10.995.859-5.484 7.482-5.03 10.717.935 23.683 1.617 35.537 2.452 25.782 1.517 38.193 3.968h6.064l.86-2.451-2.073-1.517-1.618-1.517-36.776-24.922-39.81-26.338-20.852-15.166-11.273-7.683-5.687-7.204-2.451-15.721 10.237-11.273 13.75.935 3.513.936 13.928 10.716 29.749 23.027 38.848 28.612 5.687 4.727 2.275-1.617.278-1.138-2.553-4.271-21.13-38.193-22.546-38.848-10.035-16.101-2.654-9.655c-.935-3.968-1.617-7.304-1.617-11.374l11.652-15.823 6.445-2.073 15.545 2.073 6.547 5.687 9.655 22.092 15.646 34.78 24.265 47.291 7.103 14.028 3.791 12.992 1.416 3.968 2.449-.001v-2.275l1.997-26.641 3.69-32.707 3.589-42.084 1.239-11.854 5.863-14.206 11.652-7.683 9.099 4.348 7.482 10.716-1.036 6.926-4.449 28.915-8.72 45.294-5.687 30.331h3.313l3.792-3.791 15.342-20.372 25.782-32.227 11.374-12.789 13.27-14.129 8.517-6.724 16.1-.001 11.854 17.617-5.307 18.199-16.581 21.029-13.75 17.819-19.716 26.54-12.309 21.231 1.138 1.694 2.932-.278 44.536-9.479 24.062-4.347 28.714-4.928 12.992 6.066 1.416 6.167-5.106 12.613-30.71 7.583-36.018 7.204-53.636 12.689-.657.48.758.935 24.164 2.275 10.337.556h25.301l47.114 3.514 12.309 8.139 7.381 9.959-1.238 7.583-18.957 9.655-25.579-6.066-59.702-14.205-20.474-5.106-2.83-.001v1.694l17.061 16.682 31.266 28.233 39.152 36.397 1.997 8.999-5.03 7.102-5.307-.758-34.401-25.883-13.27-11.651-30.053-25.302-1.996-.001v2.654l6.926 10.136 36.574 54.975 1.895 16.859-2.653 5.485-9.479 3.311-10.414-1.895-21.408-30.054-22.092-33.844-17.819-30.331-2.173 1.238-10.515 113.261-4.929 5.788-11.374 4.348-9.478-7.204-5.03-11.652 5.03-23.027 6.066-30.052 4.928-23.886 4.449-29.674 2.654-9.858-.177-.657-2.173.278-22.37 30.71-34.021 45.977-26.919 28.815-6.445 2.553-11.173-5.789 1.037-10.337 6.243-9.2 37.257-47.392 22.47-29.371 14.508-16.961-.101-2.451h-.859l-98.954 64.251-17.618 2.275-7.583-7.103.936-11.652 3.589-3.791 29.749-20.474-.101.102.024.101z"/>
+        </svg>
+      );
 
-        return React.createElement(
-          'div',
-          {
-            className: "bg-red-100 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-md relative my-6 shadow-md",
-            role: "alert"
-          },
-          React.createElement(
-            'div', { className: "flex items-center" },
-            React.createElement('svg', { xmlns: "http://www.w3.org/2000/svg", viewBox: "0 0 20 20", fill: "currentColor", className: "w-6 h-6 mr-3 text-red-500" },
-              React.createElement('path', { fillRule: "evenodd", d: "M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z", clipRule: "evenodd" })
-            ),
-            React.createElement('div', null, 
-              React.createElement('strong', { className: "font-semibold" }, "Oh no! "),
-              React.createElement('span', { className: "block sm:inline" }, message)
-            )
-          )
-        );
-      };
-      // --- END OF INLINED components/ErrorMessage.js ---
+      const UpArrowSendIcon = () => (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-white">
+            <path fillRule="evenodd" d="M12 20.25a.75.75 0 01-.75-.75V6.31l-5.47 5.47a.75.75 0 01-1.06-1.06l6.75-6.75a.75.75 0 011.06 0l6.75 6.75a.75.75 0 11-1.06 1.06l-5.47-5.47V19.5a.75.75 0 01-.75-.75z" clipRule="evenodd" />
+        </svg>
+      );
 
-      // --- START OF INLINED components/IdeaCard.js ---
-      const IdeaCard = ({ idea }) => {
-        return React.createElement(
-          'div',
-          {
-            className: "bg-white/90 backdrop-blur-sm shadow-[0_3px_10px_rgba(0,0,0,0.04)] rounded-xl p-6 group transition-all duration-300 ease-in-out transform flex flex-col border border-slate-200/60"
-          },
-          React.createElement(
-            'h3',
-            {
-              className: "text-xl sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-sky-500 via-cyan-500 to-teal-500 mb-3 transition-colors"
-            },
-            idea.title
-          ),
-          React.createElement(
-            'p',
-            { className: "text-slate-600 text-sm sm:text-base leading-relaxed flex-grow" },
-            idea.description
-          )
-        );
-      };
-      // --- END OF INLINED components/IdeaCard.js ---
+      const PlusIcon = () => (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+            <path fillRule="evenodd" d="M12 3.75a.75.75 0 01.75.75v6.75h6.75a.75.75 0 010 1.5h-6.75v6.75a.75.75 0 01-1.5 0v-6.75H4.5a.75.75 0 010-1.5h6.75V4.5a.75.75 0 01.75-.75z" clipRule="evenodd" />
+        </svg>
+      );
 
-      // --- START OF INLINED components/InputForm.js ---
-      const InputForm = ({ onSubmit, isLoading }) => {
-        const [topic, setTopic] = React.useState('');
-        const [domains, setDomains] = React.useState('');
-        // numIdeas state and setter removed
+      const NewRefreshIcon = (props) => ( 
+        <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" viewBox="0 0 32 32" {...props}>
+          <path fill="currentColor" d="M 16 4 L 16 6 C 21.535156 6 26 10.464844 26 16 C 26 21.535156 21.535156 26 16 26 C 10.464844 26 6 21.535156 6 16 C 6 12.734375 7.585938 9.851563 10 8.03125 L 10 13 L 12 13 L 12 5 L 4 5 L 4 7 L 8.09375 7 C 5.59375 9.199219 4 12.417969 4 16 C 4 22.617188 9.382813 28 16 28 C 22.617188 28 28 22.617188 28 16 C 28 9.382813 22.617188 4 16 4 Z"></path>
+        </svg>
+      );
 
+      const NewCloseIconSVG = (props) => ( 
+        <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" viewBox="0 0 24 24" {...props} className={`inline-block ${props.className || 'w-6 h-6'}`}>
+            <path fill="currentColor" d="M13.414,12l6.293-6.293c0.391-0.391,0.391-1.023,0-1.414s-1.023-0.391-1.414,0L12,10.586L5.707,4.293 c-0.391-0.391-1.023-0.391-1.414,0s-0.391,1.023,0,1.414L10.586,12l-6.293,6.293c-0.391,0.391-0.391,1.023,0,1.414 C4.488,19.902,4.744,20,5,20s0.512-0.098,0.707-0.293L12,13.414l6.293,6.293C18.488,19.902,18.744,20,19,20s0.512-0.098,0.707-0.293 c0.391-0.391,0.391-1.023,0-1.414L13.414,12z"/>
+        </svg>
+      );
+
+
+      const HamburgerIcon = (props) => (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+        </svg>
+      );
+
+      const PinUnlockModal = ({ isOpen, onClose, onSubmitPin, pinError }) => {
+        const [currentPin, setCurrentPin] = useState('');
+        const pinInputRef = useRef(null);
+    
+        useEffect(() => {
+          if (isOpen) {
+            setCurrentPin('');
+            setTimeout(() => { 
+              pinInputRef.current?.focus();
+            }, 100);
+          }
+        }, [isOpen]);
+    
         const handleSubmit = (e) => {
           e.preventDefault();
-          if (!topic.trim()) {
-             const topicInput = document.getElementById('topic');
-             topicInput.focus();
-             topicInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
-             setTimeout(() => topicInput.classList.remove('border-red-500', 'ring-1', 'ring-red-500'), 2500);
-            return;
-          }
-          onSubmit({ topic, domains }); // numIdeas removed from submission
+          onSubmitPin(currentPin);
+        };
+    
+        if (!isOpen) return null;
+    
+        return (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-modal-fade-in">
+            <div className="bg-white p-4 sm:p-5 rounded-lg shadow-xl w-full max-w-[18rem] sm:max-w-xs relative"> 
+              <button 
+                onClick={onClose}
+                className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 p-1 rounded-full"
+                aria-label="Close PIN modal"
+              >
+                <NewCloseIconSVG className="w-5 h-5" />
+              </button>
+              <h2 className="text-md sm:text-lg font-semibold text-text-primary mb-3 sm:mb-4 text-center">Enter PIN to Unlock</h2>
+              <form onSubmit={handleSubmit}>
+                <input
+                  ref={pinInputRef}
+                  type="password"
+                  value={currentPin}
+                  onChange={(e) => setCurrentPin(e.target.value)}
+                  className="w-full px-3 py-2 border border-border-default rounded-md focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary/80 outline-none mb-3 text-center"
+                  placeholder="Your PIN"
+                />
+                {pinError && <p className="text-red-500 text-xs text-center mb-3">{pinError}</p>}
+                <button
+                  type="submit"
+                  className="w-full bg-brand-send-active text-white py-2 px-4 rounded-md hover:bg-brand-send-hover transition-colors font-medium text-sm sm:text-base"
+                >
+                  Unlock Sidebar
+                </button>
+              </form>
+            </div>
+          </div>
+        );
+      };
+      
+      const PinSettingsModal = ({ isOpen, onClose, onSetPin, currentPin, statusMessage, statusType }) => {
+        const [newPin, setNewPin] = useState('');
+        const [confirmPin, setConfirmPin] = useState('');
+        const [error, setError] = useState('');
+        const newPinInputRef = useRef(null);
+
+        useEffect(() => {
+            if (isOpen) {
+                setNewPin('');
+                setConfirmPin('');
+                setError('');
+                setTimeout(() => newPinInputRef.current?.focus(), 100);
+            }
+        }, [isOpen]);
+
+        const handleSubmit = (e) => {
+            e.preventDefault();
+            if (!newPin) {
+                setError('PIN cannot be empty.');
+                return;
+            }
+            if (newPin.length < 4) {
+                setError('PIN must be at least 4 characters long.');
+                return;
+            }
+            if (newPin !== confirmPin) {
+                setError('PINs do not match.');
+                return;
+            }
+            setError('');
+            onSetPin(newPin);
         };
 
-        const inputBaseClasses = "w-full p-3 bg-white border border-slate-300 placeholder-slate-400/80 text-slate-700 rounded-lg transition-all duration-200 ease-in-out focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 shadow-sm hover:border-slate-400";
+        if (!isOpen) return null;
 
-        return React.createElement(
-          'form',
-          {
-            onSubmit: handleSubmit,
-            className: "bg-white rounded-2xl p-6 sm:p-8 w-full space-y-6 sm:space-y-8 border border-slate-200/80" 
-          },
-          React.createElement(
-            'div',
-            null,
-            React.createElement(
-              'label',
-              { htmlFor: "topic", className: "block text-sm font-semibold text-slate-700 mb-2" },
-              "Topic", // Changed from "Main Topic"
-              React.createElement('span', { className: "text-sky-600 font-bold" }, "")
-            ),
-            React.createElement('textarea', {
-              id: "topic",
-              value: topic,
-              onChange: (e) => {
-                setTopic(e.target.value);
-                e.target.classList.remove('border-red-500', 'ring-1', 'ring-red-500');
-              },
-              placeholder: "What you think about..",
-              rows: 3,
-              className: `${inputBaseClasses} resize-none min-h-[80px]`, 
-              required: true
-            })
-          ),
-          React.createElement(
-            'div',
-            null,
-            React.createElement(
-              'label',
-              { htmlFor: "domains", className: "block text-sm font-semibold text-slate-700 mb-2" },
-              "Domains" // Changed from "Focus Domains"
-            ),
-            React.createElement('input', {
-              type: "text",
-              id: "domains",
-              value: domains,
-              onChange: (e) => setDomains(e.target.value),
-              placeholder: "e.g., Technology, Healthcare, Education", // Changed placeholder
-              className: inputBaseClasses
-            })
-          ),
-          // "Number of Ideas" input field and label removed
-          React.createElement(
-            'button',
-            {
-              type: "submit",
-              disabled: isLoading,
-              className: "w-full bg-gradient-to-r from-sky-500 to-cyan-500 hover:from-sky-600 hover:to-cyan-600 text-white font-semibold py-3.5 px-8 rounded-lg shadow-md focus:outline-none focus:ring-4 focus:ring-sky-300 transition-all duration-300 ease-in-out active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center text-base"
-            },
-            isLoading
-              ? React.createElement(
-                  React.Fragment,
-                  null,
-                  React.createElement(
-                    'svg',
-                    {
-                      className: "animate-spin -ml-1 mr-3 h-5 w-5 text-white",
-                      xmlns: "http://www.w3.org/2000/svg",
-                      fill: "none",
-                      viewBox: "0 0 24 24"
-                    },
-                    React.createElement('circle', {
-                      className: "opacity-25",
-                      cx: "12",
-                      cy: "12",
-                      r: "10",
-                      stroke: "currentColor",
-                      strokeWidth: "4"
-                    }),
-                    React.createElement('path', {
-                      className: "opacity-75",
-                      fill: "currentColor",
-                      d: "M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    })
-                  ),
-                  "Generating Insights..."
-                )
-              : React.createElement(
-                  React.Fragment,
-                  null,
-                  React.createElement('svg', {xmlns:"http://www.w3.org/2000/svg", viewBox:"0 0 20 20", fill:"currentColor", className:"w-5 h-5 mr-2"},
-                    React.createElement('path', {d:"M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z"})
-                  ),
-                  "Spark New Ideas"
-                )
-          )
+        return (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-modal-fade-in">
+                <div className="bg-white p-4 sm:p-6 rounded-lg shadow-xl w-full max-w-[18rem] sm:max-w-sm relative"> 
+                    <button
+                        onClick={onClose}
+                        className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 p-1 rounded-full"
+                        aria-label="Close PIN settings"
+                    >
+                         <NewCloseIconSVG className="w-5 h-5" />
+                    </button>
+                    <h2 className="text-md sm:text-lg font-semibold text-text-primary mb-1 text-center">
+                        {currentPin ? 'Change PIN' : 'Set PIN'}
+                    </h2>
+                    {currentPin && <p className="text-xs text-text-subtle text-center mb-3 sm:mb-4">Current PIN is set. Enter new PIN to change.</p>}
+                    
+                    <form onSubmit={handleSubmit} className="space-y-3">
+                        <div>
+                            <label htmlFor="newPinModal" className="block text-sm font-medium text-text-secondary">New PIN</label>
+                            <input
+                                id="newPinModal"
+                                ref={newPinInputRef}
+                                type="password"
+                                value={newPin}
+                                onChange={(e) => setNewPin(e.target.value)}
+                                className="mt-1 w-full px-3 py-2 border border-border-default rounded-md focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary/80 outline-none"
+                                placeholder="Enter new PIN"
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="confirmPinModal" className="block text-sm font-medium text-text-secondary">Confirm New PIN</label>
+                            <input
+                                id="confirmPinModal"
+                                type="password"
+                                value={confirmPin}
+                                onChange={(e) => setConfirmPin(e.target.value)}
+                                className="mt-1 w-full px-3 py-2 border border-border-default rounded-md focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary/80 outline-none"
+                                placeholder="Confirm new PIN"
+                            />
+                        </div>
+                        {error && <p className="text-red-500 text-xs text-center">{error}</p>}
+                        {statusMessage && (
+                             <p className={`text-xs text-center ${statusType === 'success' ? 'text-green-600' : 'text-red-600'}`}>{statusMessage}</p>
+                        )}
+                        <button
+                            type="submit"
+                            className="w-full bg-brand-send-active text-white py-2 px-4 rounded-md hover:bg-brand-send-hover transition-colors font-medium text-sm sm:text-base"
+                        >
+                            {currentPin ? 'Change PIN' : 'Set PIN'}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        );
+    };
+
+    const ForgotPasswordModal = ({ isOpen, onClose, onSendResetEmail, statusMessage, statusType }) => {
+        const [email, setEmail] = useState('');
+        const [loading, setLoading] = useState(false);
+        const emailInputRef = useRef(null);
+
+        useEffect(() => {
+            if (isOpen) {
+                setEmail('');
+                setLoading(false);
+                setTimeout(() => emailInputRef.current?.focus(), 100);
+            }
+        }, [isOpen]);
+
+        const handleSubmit = async (e) => {
+            e.preventDefault();
+            if (!email) {
+                onSendResetEmail(email, true, "Email address is required.");
+                return;
+            }
+            setLoading(true);
+            await onSendResetEmail(email);
+            setLoading(false);
+        };
+
+        if (!isOpen) return null;
+
+        return (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-modal-fade-in">
+                <div className="bg-white p-4 sm:p-6 rounded-lg shadow-xl w-full max-w-[18rem] sm:max-w-sm relative">
+                    <button
+                        onClick={onClose}
+                        className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 p-1 rounded-full"
+                        aria-label="Close Forgot Password modal"
+                    >
+                        <NewCloseIconSVG className="w-5 h-5" />
+                    </button>
+                    <h2 className="text-md sm:text-lg font-semibold text-text-primary mb-3 sm:mb-4 text-center">Forgot Password?</h2>
+                    <p className="text-xs text-text-subtle text-center mb-3">Enter your email to receive a password reset link.</p>
+                    <form onSubmit={handleSubmit} className="space-y-3">
+                        <div>
+                            <label htmlFor="resetEmail" className="block text-sm font-medium text-text-secondary">Email Address</label>
+                            <input
+                                id="resetEmail"
+                                ref={emailInputRef}
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className="mt-1 w-full px-3 py-2 border border-border-default rounded-md focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary/80 outline-none"
+                                placeholder="your.email@example.com"
+                                required
+                            />
+                        </div>
+                        {statusMessage && (
+                            <p className={`text-xs text-center ${statusType === 'success' ? 'text-green-600' : 'text-red-600'}`}>{statusMessage}</p>
+                        )}
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full bg-brand-send-active text-white py-2 px-4 rounded-md hover:bg-brand-send-hover transition-colors font-medium text-sm sm:text-base disabled:opacity-70"
+                        >
+                            {loading ? (
+                                <div className="flex justify-center items-center">
+                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin-continuous"></div>
+                                </div>
+                            ) : "Send Reset Link"}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        );
+    };
+
+
+      const Sidebar = ({ 
+        chatHistory, onSelectChat, currentChatId, onNewChat, 
+        isOpen, setIsOpen, onDeleteChat, 
+        onOpenPinSettings
+      }) => {
+        const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+        const deletePopoverRef = useRef(null);
+        const longPressTimerRef = useRef(null);
+        const longPressTimeout = 700; 
+
+        const handleChatPressStart = (event, chatId) => {
+            clearTimeout(longPressTimerRef.current);
+            longPressTimerRef.current = setTimeout(() => {
+                if (event.type === 'touchstart' || window.innerWidth < 768) {
+                    setConfirmDeleteId(chatId);
+                }
+            }, longPressTimeout);
+        };
+
+        const handleChatPressEnd = () => {
+            clearTimeout(longPressTimerRef.current);
+        };
+
+        useEffect(() => {
+            const handleClickOutside = (event) => {
+                const clickedButton = event.target.closest(`button[data-chat-id="${confirmDeleteId}"]`);
+                if (clickedButton) return; 
+
+                if (deletePopoverRef.current && !deletePopoverRef.current.contains(event.target)) {
+                    setConfirmDeleteId(null);
+                }
+            };
+            document.addEventListener('mousedown', handleClickOutside);
+            return () => document.removeEventListener('mousedown', handleClickOutside);
+        }, [confirmDeleteId]);
+
+
+        return (
+          <>
+            {isOpen && (
+              <div 
+                className="fixed inset-0 bg-black/30 z-30 md:hidden"
+                onClick={() => setIsOpen(false)} 
+              ></div>
+            )}
+            <div className={`fixed md:static top-0 left-0 h-full w-64 bg-surface-sidebar text-text-primary p-4 flex flex-col z-40 transform ${isOpen ? 'animate-slide-in-left' : '-translate-x-full md:translate-x-0'} md:!translate-x-0 transition-transform duration-300 ease-in-out border-r border-border-light`}>
+              <div className="flex-grow flex flex-col overflow-hidden">
+                <h2 className="text-lg font-semibold mb-3 pb-2 border-b border-border-light">Chat History</h2>
+                <button
+                  onClick={() => { onNewChat(); setIsOpen(false); setConfirmDeleteId(null); }}
+                  className="w-full bg-brand-send-active text-white py-2 px-3 rounded-md hover:bg-brand-send-hover transition-colors mb-4 text-sm font-medium flex items-center justify-center space-x-2"
+                >
+                  <i className="fas fa-plus-circle"></i>
+                  <span>New Chat</span>
+                </button>
+                <ul className="flex-grow overflow-y-auto space-y-1 sidebar-chat-list mb-4">
+                  {chatHistory.map(chat => (
+                    <li key={chat.id} className="relative group">
+                      <button
+                        data-chat-id={chat.id} 
+                        onClick={() => {
+                          if (confirmDeleteId === chat.id) {
+                              setConfirmDeleteId(null); 
+                          } else {
+                              onSelectChat(chat.id);
+                              setIsOpen(false); 
+                              setConfirmDeleteId(null); 
+                          }
+                        }}
+                        onMouseDown={(e) => handleChatPressStart(e, chat.id)}
+                        onMouseUp={handleChatPressEnd}
+                        onMouseLeave={handleChatPressEnd}
+                        onTouchStart={(e) => handleChatPressStart(e, chat.id)}
+                        onTouchEnd={handleChatPressEnd}
+                        onTouchMove={handleChatPressEnd} 
+                        title={chat.title}
+                        className={`w-full text-left text-sm pl-2.5 pr-2.5 py-2 rounded-md truncate transition-colors ${chat.id === currentChatId ? 'bg-brand-primary/20 text-brand-primary font-medium' : 'hover:bg-interactive-hover/70 text-text-secondary'}`}
+                      >
+                        {chat.title || `Chat ${chat.id.substring(0,5)}...`}
+                      </button>
+                      {confirmDeleteId === chat.id && (
+                        <div ref={deletePopoverRef} className="absolute right-0 mt-1 mr-1 w-36 bg-white border border-border-default rounded-md shadow-xl z-20 p-1 animate-scale-in-subtle origin-top-right">
+                          <button
+                            onClick={(e) => { 
+                              e.stopPropagation();
+                              onDeleteChat(chat.id);
+                              setConfirmDeleteId(null);
+                            }}
+                            className="w-full text-left px-2.5 py-1.5 text-xs text-red-600 hover:bg-red-500/10 rounded-md flex items-center space-x-1.5 transition-colors"
+                          >
+                            <i className="fas fa-trash-alt fa-fw"></i>
+                            <span>Delete Chat</span>
+                          </button>
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                  {chatHistory.length === 0 && <li className="text-xs text-text-subtle text-center py-4">No chats yet.</li>}
+                </ul>
+              </div>
+              <div className="mt-auto border-t border-border-light pt-3 space-y-2">
+                  <button
+                      onClick={onOpenPinSettings}
+                      className="w-full text-sm text-text-secondary bg-gray-200 py-2 px-3 rounded-md transition-colors flex items-center space-x-2 justify-start"
+                  >
+                      <i className="fas fa-key fa-fw"></i>
+                      <span>Change PIN</span>
+                  </button>
+                  {/* Logout button removed as Firebase auth is removed */}
+              </div>
+            </div>
+          </>
         );
       };
-      // --- END OF INLINED components/InputForm.js ---
 
-      // --- START OF INLINED App.js ---
-      const App = () => {
-        const [ideas, setIdeas] = React.useState([]);
-        const [isLoading, setIsLoading] = React.useState(false);
-        const [error, setError] = React.useState(null);
-        const [showIntro, setShowIntro] = React.useState(true);
+      const ChatMessageItemOptions = ({ message, onDeleteAiMessagePair }) => {
+        const [showOptions, setShowOptions] = useState(false);
+        const optionsRef = useRef(null);
+        const [copied, setCopied] = useState(false);
 
-
-        const handleGenerateIdeas = React.useCallback(async (userInput) => {
-          setIsLoading(true);
-          setError(null);
-          setIdeas([]);
-          setShowIntro(false); 
-
-          try {
-            const fetchedIdeas = await generateIdeas(userInput);
-            setIdeas(fetchedIdeas);
-          } catch (err) {
-            if (err instanceof Error) {
-              setError(err.message);
-            } else {
-              setError('An unexpected error occurred.');
-            }
-            setIdeas([]);
-          } finally {
-            setIsLoading(false);
-          }
+        useEffect(() => {
+            const handleClickOutside = (event) => {
+                if (optionsRef.current && !optionsRef.current.contains(event.target) && !event.target.closest('.ai-message-options-trigger')) {
+                    setShowOptions(false);
+                }
+            };
+            document.addEventListener('mousedown', handleClickOutside);
+            return () => document.removeEventListener('mousedown', handleClickOutside);
         }, []);
 
-        return React.createElement(
-          'div',
-          {
-            className: "min-h-screen text-slate-800 flex flex-col selection:bg-sky-500/30 selection:text-sky-800"
-          },
-          React.createElement(
-            'header',
-            { className: "w-full py-6 sm:py-8 shadow-sm bg-white/80 backdrop-blur-md sticky top-0 z-10" }, 
-             React.createElement(
-                'div',
-                { className: "max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex items-center justify-center" },
-                React.createElement('svg', { xmlns: "http://www.w3.org/2000/svg", fill: "none", viewBox: "0 0 24 24", strokeWidth: "1.5", stroke: "currentColor", className: "w-10 h-10 sm:w-12 sm:h-12 text-sky-500 mr-3" },
-                    React.createElement('path', { strokeLinecap: "round", strokeLinejoin: "round", d: "M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.355a7.5 7.5 0 01-4.5 0m4.5 0v.75A2.25 2.25 0 0112 21h-.008c-.54 0-.992-.113-1.423-.323M12 18V9.75m0 0A6.023 6.023 0 0010.5 9M12 9.75c.728 0 1.453.09 2.127.26M10.5 9a5.995 5.995 0 00-5.042 4.213M10.5 9.001c1.083-.78 2.304-1.26 3.6-1.26 2.502 0 4.683 1.413 5.68 3.46M12 3c-.095 0-.19.003-.283.009M12 3c.095 0 .19-.003.283-.009M12 3v.003M9.75 4.125a5.983 5.983 0 014.5 0M3.75 7.5A5.983 5.983 0 018.25 6M3.75 7.5V9M3.75 7.5S3 9 3 10.5m0 0a5.995 5.995 0 005.042 4.213m0 0a5.995 5.995 0 01-5.042-4.213M10.5 14.999c-1.083.78-2.304 1.26-3.6 1.26-2.502 0-4.683-1.413-5.68-3.46" })
-                ),
-                React.createElement(
-                'h1',
-                {
-                    className: "text-3xl sm:text-4xl lg:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-sky-600 via-cyan-500 to-teal-500 animated-gradient-text py-1"
-                },
-                "Ideation Co-pilot"
-                )
-            )
-          ),
-          React.createElement( 
-            'div',
-            { className: "flex-grow w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col md:flex-row gap-8" },
-            React.createElement(
-              'aside',
-              { className: "w-full md:w-[400px] lg:w-[450px] md:flex-shrink-0 sticky-aside md:top-28 md:max-h-[calc(100vh-8rem)] md:overflow-y-auto aside-custom-scrollbar p-1" },
-              React.createElement(InputForm, { onSubmit: handleGenerateIdeas, isLoading: isLoading })
-            ),
-            React.createElement(
-              'section',
-              { className: "flex-grow min-h-[400px]" }, 
-                isLoading && React.createElement(LoadingSpinner, null),
-                error && React.createElement(ErrorMessage, { message: error }),
-                !isLoading && !error && ideas.length === 0 && showIntro &&
-                React.createElement( 
-                    'div',
-                    { className: "flex flex-col items-center justify-center h-full min-h-[300px] text-center text-slate-400 p-8 bg-white rounded-xl border border-slate-200/60" },
-                    React.createElement('svg', { xmlns: "http://www.w3.org/2000/svg", fill: "none", viewBox: "0 0 24 24", strokeWidth: "1.5", stroke: "currentColor", className: "w-20 h-20 mx-auto mb-4 text-sky-200" },
-                        React.createElement('path', { strokeLinecap: "round", strokeLinejoin: "round", d: "M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.355a7.5 7.5 0 01-4.5 0m4.5 0v.75A2.25 2.25 0 0112 21h-.008c-.54 0-.992-.113-1.423-.323M12 18V9.75m0 0A6.023 6.023 0 0010.5 9M12 9.75c.728 0 1.453.09 2.127.26M10.5 9a5.995 5.995 0 00-5.042 4.213M10.5 9.001c1.083-.78 2.304-1.26 3.6-1.26 2.502 0 4.683 1.413 5.68 3.46M12 3c-.095 0-.19.003-.283.009M12 3c.095 0 .19-.003.283-.009M12 3v.003M9.75 4.125a5.983 5.983 0 014.5 0M3.75 7.5A5.983 5.983 0 018.25 6M3.75 7.5V9M3.75 7.5S3 9 3 10.5m0 0a5.995 5.995 0 005.042 4.213m0 0a5.995 5.995 0 01-5.042-4.213M10.5 14.999c-1.083.78-2.304 1.26-3.6 1.26-2.502 0-4.683-1.413-5.68-3.46" })
-                    ),
-                    React.createElement('p', { className: "text-lg" }, "Generated ideas will appear here.")
-                ),
-                !isLoading && !error && ideas.length === 0 && !showIntro && 
-                React.createElement(
-                    'div',
-                    { className: "flex flex-col items-center justify-center h-full min-h-[300px] text-center text-slate-500 p-8 bg-white rounded-xl border border-slate-200/60" },
-                    React.createElement('svg', {xmlns:"http://www.w3.org/2000/svg", fill:"none", viewBox:"0 0 24 24", strokeWidth:"1.5", stroke:"currentColor", className:"w-16 h-16 mx-auto mb-4 text-sky-300"},
-                       React.createElement('path', { strokeLinecap:"round", strokeLinejoin:"round", d:"M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125V6.375c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v.001c0 .621.504 1.125 1.125 1.125z" })
-                    ),
-                    React.createElement('p', { className: "text-xl font-medium text-slate-600" }, "No ideas found"),
-                    React.createElement('p', { className: "mt-1 text-slate-400" }, "Try adjusting your topic or criteria.")
-                ),
-                !isLoading && ideas.length > 0 &&
-                React.createElement(
-                    'div',
-                    { className: "w-full" },
-                    // Removed the h2 heading "Generated Ideas"
-                    React.createElement(
-                    'div',
-                    { className: "grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2" }, // Added pt-2 for a bit of space if needed, adjust as necessary
-                    ideas.map((idea) => React.createElement(IdeaCard, { key: idea.id, idea: idea }))
-                    )
-                )
-            )
-          ),
-          React.createElement(
-            'footer',
-            { className: "w-full text-center mt-auto py-8 bg-slate-50" } 
-          )
+        const handleCopyText = () => {
+            const textToCopy = message.parts?.[0]?.text || message.text || "";
+            if (textToCopy) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 1500);
+                }).catch(err => console.error('Failed to copy text: ', err));
+            }
+            setShowOptions(false);
+        };
+
+        const handleDelete = () => {
+            onDeleteAiMessagePair(message.id);
+            setShowOptions(false);
+        };
+
+        if (message.role !== 'model' || message.isLoading || message.isError || !(message.parts?.[0]?.text || message.text)) {
+            return null;
+        }
+
+        return (
+            <div className="relative">
+                <button
+                    onClick={(e) => { e.stopPropagation(); setShowOptions(prev => !prev); }}
+                    className="ai-message-options-trigger p-1.5 rounded-full text-text-subtle hover:text-brand-primary hover:bg-interactive-hover/70 transition-all duration-150 focus:outline-none focus:ring-1 focus:ring-brand-primary/50"
+                    aria-label="AI Message Options"
+                >
+                    <i className="fas fa-ellipsis-v fa-sm"></i>
+                </button>
+                {showOptions && (
+                    <div ref={optionsRef} className="absolute left-0 bottom-full mb-1 w-32 bg-white border border-border-default rounded-md shadow-xl z-20 p-1 animate-scale-in-subtle origin-bottom-left">
+                        <button
+                            onClick={handleCopyText}
+                            className="w-full text-left px-2.5 py-1.5 text-xs text-text-secondary hover:bg-interactive-hover/70 rounded-md flex items-center space-x-1.5 transition-colors"
+                        >
+                            {copied ? <CheckMarkIconSVG className="w-4 h-4 mr-1.5" /> : <NewCopyIconSVG className="w-4 h-4 mr-1.5 fill-current" />}
+                            <span>{copied ? "Copied!" : "Copy"}</span>
+                        </button>
+                        <button
+                            onClick={handleDelete}
+                            className="w-full text-left px-2.5 py-1.5 text-xs text-red-600 hover:bg-red-500/10 rounded-md flex items-center space-x-1.5 transition-colors"
+                        >
+                            <i className="fas fa-trash-alt fa-fw mr-1.5"></i>
+                            <span>Delete</span>
+                        </button>
+                    </div>
+                )}
+            </div>
         );
       };
-      // --- END OF INLINED App.js ---
 
-      // --- START OF INLINED index.js (React Mounting) ---
-      const rootElement = document.getElementById('root');
-      if (!rootElement) {
-        throw new Error("Could not find root element to mount to");
-      }
 
-      const root = ReactDOM.createRoot(rootElement);
-      root.render(
-        React.createElement(
-          React.StrictMode,
-          null,
-          React.createElement(App, null)
-        )
-      );
-      // --- END OF INLINED index.js (React Mounting) ---
+      const ChatMessageItem = ({ 
+        message, 
+        onDeleteAiMessagePair,
+        selectedUserMessageId, 
+        onSelectUserMessage 
+      }) => { 
+        const isUser = message.role === 'user'; 
+        const isError = message.isError === true; 
+        const contentRef = useRef(null); 
+        const [userCopied, setUserCopied] = useState(false);
+        
+        const isNonErrorAiMessageCard = message.role === 'model' && !isError;
+        const messageLineAnimationClasses = isNonErrorAiMessageCard ? '' : 'animate-fade-in-up opacity-0';
+        const messageLineAnimationStyles = isNonErrorAiMessageCard ? {} : { animationFillMode: 'forwards' };
+        
+        useEffect(() => {
+          if (message.role === 'model' && !isError && !message.isLoading && (message.text || message.parts?.[0]?.text) && contentRef.current) {
+            const preElements = contentRef.current.querySelectorAll('pre');
+            preElements.forEach(preEl => {
+              if (preEl.parentNode && preEl.parentNode.classList.contains('code-block-wrapper')) {
+                 const codeElement = preEl.querySelector('code');
+                 if(codeElement && !codeElement.dataset.highlighted){
+                    hljs.highlightElement(codeElement);
+                    codeElement.dataset.highlighted = 'true';
+                 }
+                return; 
+              }
+              
+              const codeElement = preEl.querySelector('code');
+              if (!codeElement) return;
+
+              const wrapper = document.createElement('div');
+              wrapper.classList.add('code-block-wrapper');
+              wrapper.style.position = 'relative';
+
+              let button = preEl.querySelector('.code-copy-button');
+              if (!button) { 
+                button = document.createElement('button');
+                button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3.5 h-3.5"><path d="M20 2H10c-1.103 0-2 .897-2 2v4H4c-1.103 0-2 .897-2 2v10c0 1.103.897 2 2 2h10c1.103 0 2-.897 2-2v-4h4c1.103 0 2-.897 2-2V4c0-1.103-.897-2-2-2zM4 20V10h10l.002 10H4zm16-6h-4v-4c0-1.103-.897-2-2-2h-4V4h10v10z"></path></svg>`; 
+                button.classList.add(
+                  'code-copy-button', 'absolute', 'p-1.5',
+                  'bg-gray-100', 'hover:bg-gray-200',
+                  'text-gray-600', 'hover:text-gray-800',
+                  'border', 'border-gray-300', 'rounded-md',
+                  'transition-colors', 'duration-150',
+                  'opacity-80', 'hover:opacity-100'
+                );
+                button.style.top = '0.35rem';
+                button.style.right = '0.35rem';
+                button.style.zIndex = '10';
+                button.setAttribute('aria-label', 'Copy code');
+                
+                button.onclick = () => {
+                  if (codeElement) {
+                    navigator.clipboard.writeText(codeElement.textContent || '').then(() => {
+                      button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3.5 h-3.5"><path d="M20.285 2l-11.285 11.567-5.286-5.011-3.714 3.716 9 8.728 15-15.285z"></path></svg>`; 
+                      button.classList.add('text-green-500');
+                      button.classList.remove('text-gray-600', 'hover:text-gray-800');
+                      setTimeout(() => {
+                        button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3.5 h-3.5"><path d="M20 2H10c-1.103 0-2 .897-2 2v4H4c-1.103 0-2 .897-2 2v10c0 1.103.897 2 2 2h10c1.103 0 2-.897 2-2v-4h4c1.103 0 2-.897 2-2V4c0-1.103-.897-2-2-2zM4 20V10h10l.002 10H4zm16-6h-4v-4c0-1.103-.897-2-2-2h-4V4h10v10z"></path></svg>`;
+                        button.classList.remove('text-green-500');
+                        button.classList.add('text-gray-600', 'hover:text-gray-800');
+                      }, 2000);
+                    }).catch(err => console.error('Failed to copy: ', err));
+                  }
+                };
+                 if (preEl.parentNode) {
+                    preEl.parentNode.insertBefore(wrapper, preEl);
+                    wrapper.appendChild(preEl); 
+                    wrapper.appendChild(button); 
+                }
+              }
+              
+              if (!codeElement.dataset.highlighted) {
+                hljs.highlightElement(codeElement);
+                codeElement.dataset.highlighted = 'true';
+              }
+            });
+          }
+        }, [message.text, message.parts, message.role, message.isLoading, isError]);
+
+
+        const handleCopyUserText = (textToCopy) => {
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                setUserCopied(true);
+                setTimeout(() => setUserCopied(false), 1500);
+            }).catch(err => console.error('Failed to copy text: ', err));
+        };
+
+
+        if (message.role === 'system') { 
+            const systemText = message.text || (message.parts?.[0]?.text || "");
+            const systemMessageStyle = isError ? "px-4 py-2 text-xs text-red-700 bg-red-100 border border-red-300 rounded-full shadow-sm italic" : "px-4 py-2 text-xs text-text-subtle bg-surface-accent border border-border-light rounded-full shadow-sm italic"; 
+            return (<div className="flex justify-center my-4 animate-fade-in-up opacity-0" style={{animationFillMode: 'forwards'}}><div className={systemMessageStyle}>{isError ? <><i className="fas fa-exclamation-triangle mr-1.5"></i> {systemText}</> : systemText }</div></div>);
+        }
+        
+        let bubbleBaseClasses = 'px-4 py-3 md:px-4 md:py-3 shadow-card relative group'; 
+        let bubbleRoleClasses = ''; 
+        let bubbleWidthClasses = ''; 
+        let contentToShow = null;
+        
+        const messageTextContent = message.parts && message.parts[0] && typeof message.parts[0].text === 'string' ? message.parts[0].text : (message.text || "");
+
+        if (isUser) { 
+          bubbleRoleClasses = 'bg-surface-user-bubble-bg text-text-primary rounded-xl rounded-br-md';
+          bubbleWidthClasses = 'max-w-[80%] sm:max-w-[75%]'; 
+          const userFilesToDisplay = message.attachedFiles || (message.uiOnlyAttachedFiles || []);
+
+          contentToShow = (
+            <>
+              {userFilesToDisplay && userFilesToDisplay.length > 0 && (
+                <div className={`grid gap-1 ${messageTextContent ? 'mb-1.5' : ''} ${userFilesToDisplay.filter(f => f.type?.startsWith('image/')).length > 1 ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-1'}`}>
+                  {userFilesToDisplay.map((file, index) => {
+                    if (file.type?.startsWith('image/') && file.apiData?.data && file.apiData?.mimeType) { 
+                      const imageSrc = `data:${file.apiData.mimeType};base64,${file.apiData.data}`;
+                      return (
+                        <div key={file.id || file.name + index} className="rounded-lg overflow-hidden group relative max-w-full w-full">
+                          <img src={imageSrc} alt={file.name || 'image preview'} className="block w-full max-h-60 object-contain rounded-lg" />
+                        </div>
+                      );
+                    } else if (file.type?.startsWith('text/')) {
+                      return ( 
+                        <div key={file.id || file.name + index} className="bg-brand-primary/10 border border-brand-primary/20 p-2 rounded-lg text-xs flex items-center space-x-2 max-w-full w-fit shadow-sm my-1">
+                           <FileTextIcon className="text-brand-primary text-sm" />
+                          <span className="truncate max-w-[120px] sm:max-w-[150px] text-text-primary font-medium">
+                            {file.name}
+                          </span>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })}
+                </div>
+              )}
+              {messageTextContent && <p className="text-sm font-normal whitespace-pre-wrap break-words font-serif">{messageTextContent}</p>}
+            </>
+          );
+
+        } else if (message.role === 'model') { 
+            // AI Message Card Styling Update
+            bubbleRoleClasses = `bg-gray-50 text-text-primary rounded-xl rounded-bl-md border border-gray-200 font-source-sans-pro`; 
+            bubbleWidthClasses = 'max-w-full w-full'; 
+            
+            if(isError) { 
+                bubbleRoleClasses = `bg-red-50 border border-red-300 text-red-700 rounded-xl rounded-bl-md font-source-sans-pro`; 
+                contentToShow = ( <div className="text-sm break-words"> <div className="flex items-center mb-1"><i className="fas fa-exclamation-triangle text-red-500 mr-2"></i><strong className="font-semibold">Error</strong></div>{messageTextContent.replace(/^Error:\s*/, '')} </div>); 
+            } else { 
+                contentToShow = (
+                  <div ref={contentRef}>
+                    <div className={`markdown-content break-words`} dangerouslySetInnerHTML={{ __html: marked.parse(messageTextContent || '') }} />
+                  </div>
+                );
+            } 
+        }
+
+        return (
+          <div className={`flex items-start ${isUser ? 'justify-end' : 'justify-start'} ${messageLineAnimationClasses} mb-1`} style={messageLineAnimationStyles}>
+            <div 
+                className={`${bubbleBaseClasses} ${bubbleWidthClasses} ${bubbleRoleClasses}`}
+                onClick={isUser ? () => onSelectUserMessage(message.id === selectedUserMessageId ? null : message.id) : undefined}
+            >
+              {contentToShow} 
+
+              {isUser && selectedUserMessageId === message.id && messageTextContent && (
+                <button
+                    onClick={(e) => { e.stopPropagation(); handleCopyUserText(messageTextContent); }}
+                    className="absolute -bottom-3 -right-1 p-1.5 bg-gray-100 text-gray-600 border border-gray-300 rounded-full shadow-md hover:bg-gray-200 transition-all"
+                    aria-label="Copy user message"
+                >
+                   {userCopied ? <CheckMarkIconSVG className="w-4 h-4" /> : <NewCopyIconSVG className="w-4 h-4 fill-current" />}
+                </button>
+              )}
+            </div>
+          </div>);
+      };
+      
+       const ModelSelector = ({ models, selectedModelId, onSelectModel, currentUser, isLoading, isAiCurrentlyProcessing }) => {
+        const [isOpen, setIsOpen] = useState(false);
+        const dropdownRef = useRef(null);
+        const selectedModel = models.find(m => m.id === selectedModelId) || models[0];
+
+        useEffect(() => {
+            const handleClickOutside = (event) => {
+                if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                    setIsOpen(false);
+                }
+            };
+            document.addEventListener("mousedown", handleClickOutside);
+            return () => document.removeEventListener("mousedown", handleClickOutside);
+        }, []);
+
+        const isDisabled = !currentUser || isLoading || isAiCurrentlyProcessing;
+
+        return (
+            <div className="relative" ref={dropdownRef}>
+                <button
+                    type="button"
+                    onClick={() => setIsOpen(prev => !prev)}
+                    className={`flex items-center justify-center text-[11px] font-medium text-text-secondary hover:text-brand-primary bg-surface-input hover:bg-interactive-hover/70 px-2 py-1 rounded-md border border-gray-300 transition-colors duration-150 focus:outline-none whitespace-nowrap ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    disabled={isDisabled}
+                >
+                    <span>{selectedModel.uiName}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={`w-3 h-3 ml-1 transform transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
+                        <path fillRule="evenodd" d="M5.22 8.22a.75.75 0 011.06 0L10 11.94l3.72-3.72a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.22 9.28a.75.75 0 010-1.06z" clipRule="evenodd" />
+                    </svg>
+                </button>
+                {isOpen && (
+                    <div className="absolute bottom-full right-0 mb-1.5 w-32 bg-white border border-border-default rounded-md shadow-xl z-30 p-1 animate-scale-in-subtle origin-bottom-right">
+                        {models.map(model => (
+                            <button
+                                key={model.id}
+                                onClick={() => {
+                                    onSelectModel(model.id);
+                                    setIsOpen(false);
+                                }}
+                                className={`w-full text-left px-2.5 py-1.5 text-xs rounded-md truncate transition-colors ${
+                                    model.id === selectedModelId 
+                                    ? 'bg-brand-primary/20 text-brand-primary font-medium' 
+                                    : 'text-text-secondary hover:bg-interactive-hover/70'
+                                }`}
+                            >
+                                {model.uiName}
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+      const ChatInterface = ({ 
+        messages, 
+        onSendMessage, 
+        isLoading, 
+        onStopGeneration, 
+        onRegenerateLastTextMessage, 
+        onNewChat, 
+        setChatError,
+        currentChatId, 
+        onToggleSidebarRequest,
+        currentUser, // No longer needed if Firebase is removed, but keep for UI logic
+        onDeleteAiMessagePair, 
+        selectedUserMessageId, 
+        setSelectedUserMessageId,
+        selectedModelId, 
+        onSelectModel 
+      }) => {
+        const [inputText, setInputText] = useState('');
+        const [selectedFiles, setSelectedFiles] = useState([]); 
+        const [userHasScrolledUp, setUserHasScrolledUp] = useState(false);
+        const [isWebSearchEnabledState, setIsWebSearchEnabledState] = useState(false); 
+
+        const fileInputRef = useRef(null);
+        const messagesEndRef = useRef(null);
+        const chatContainerRef = useRef(null);
+        const contentEditableRef = useRef(null);
+
+        useEffect(() => { 
+            const container = chatContainerRef.current; if (!container) return; 
+            const handleScroll = () => { const { scrollTop, scrollHeight, clientHeight } = container; setUserHasScrolledUp(scrollHeight - scrollTop - clientHeight >= 20);}; 
+            container.addEventListener('scroll', handleScroll, { passive: true }); 
+            
+            const handleClickOutsideMessages = (event) => {
+              if (chatContainerRef.current && !event.target.closest('.group') && !event.target.closest('.ai-message-options-trigger')) { 
+                setSelectedUserMessageId(null);
+              }
+            };
+            document.addEventListener('click', handleClickOutsideMessages);
+
+            return () => {
+              container.removeEventListener('scroll', handleScroll);
+              document.removeEventListener('click', handleClickOutsideMessages);
+            };
+        }, [setSelectedUserMessageId]); 
+        
+        useEffect(() => {
+          const lastMessage = messages[messages.length - 1];
+          const messagesEndEl = messagesEndRef.current;
+          if (!messagesEndEl) return;
+
+          const isLastItemIndicator = lastMessage && lastMessage.role === 'model' && lastMessage.isLoading && !(lastMessage.text || lastMessage.parts?.[0]?.text);
+          
+          if (lastMessage && (lastMessage.role === 'user' || isLastItemIndicator || (lastMessage.role === 'system' && lastMessage.id === 'loading_chat'))) {
+            messagesEndEl.scrollIntoView({ behavior: (isLastItemIndicator || lastMessage.id === 'loading_chat') ? "auto" : "smooth" });
+          } else if (lastMessage && lastMessage.role === 'model' && !userHasScrolledUp) {
+             messagesEndEl.scrollIntoView({ behavior: lastMessage.isLoading ? "auto" : "smooth" });
+          }
+        }, [messages, userHasScrolledUp]);
+
+        useEffect(() => { 
+            if (contentEditableRef.current) {
+                contentEditableRef.current.style.height = 'auto';
+                const maxHeight = parseInt(getComputedStyle(contentEditableRef.current).maxHeight, 10);
+                let newHeight = contentEditableRef.current.scrollHeight;
+                if (maxHeight && newHeight > maxHeight) {
+                    newHeight = maxHeight;
+                }
+                contentEditableRef.current.style.height = `${newHeight}px`;
+            }
+        }, [inputText, selectedFiles]); 
+
+        const handleFileChange = async (event) => { const files = Array.from(event.target.files); processAndSetFiles(files); if (fileInputRef.current) fileInputRef.current.value = ""; };
+        
+        const handlePaste = async (event) => {
+            const pastedText = event.clipboardData.getData('text/plain');
+            const pastedFiles = Array.from(event.clipboardData.files);
+
+            if (pastedFiles.length > 0) {
+                event.preventDefault();
+                await processAndSetFiles(pastedFiles, true);
+            } else if (pastedText && contentEditableRef.current && document.activeElement === contentEditableRef.current) {
+                event.preventDefault();
+                document.execCommand('insertText', false, pastedText);
+                setInputText(contentEditableRef.current.innerText); 
+            }
+        };
+
+        const processAndSetFiles = async (filesArray, isFromPaste = false) => { if (!filesArray.length) return false; let filesToProcess = []; let currentTotalSize = selectedFiles.reduce((acc, curr) => acc + (curr.file?.size || 0), 0); let didProcessAnyFile = false; let localErrorMessage = null; for (const file of filesArray) { const isImage = file.type.startsWith('image/'); const isTxt = file.type === 'text/plain' || (file.name && file.name.toLowerCase().endsWith('.txt')); if (!isImage && !isTxt) { if (isFromPaste) console.log(`Pasted unsupported file: ${file.name} (${file.type})`); else localErrorMessage = `File "${file.name}" (type: ${file.type}) is not supported. Only images and .txt files are allowed.`; continue; } if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) { localErrorMessage = `File "${file.name}" is larger than ${MAX_FILE_SIZE_MB}MB.`; continue; } if (currentTotalSize + file.size > MAX_TOTAL_FILES_SIZE_MB * 1024 * 1024) { localErrorMessage = `Total file size cannot exceed ${MAX_TOTAL_FILES_SIZE_MB}MB.`; break; } filesToProcess.push(file); currentTotalSize += file.size; didProcessAnyFile = true; } if(localErrorMessage){ setChatError(localErrorMessage); } else { setChatError(null); } if (filesToProcess.length > 0) { const processedFileObjects = await Promise.all( filesToProcess.map(async (file) => { const id = Date.now().toString(36) + Math.random().toString(36).substring(2) + file.name; let apiData; if (file.type.startsWith('image/')) { const base64Data = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.readAsDataURL(file); reader.onloadend = () => resolve(reader.result.split(',')[1]); reader.onerror = (error) => reject(error); }); apiData = { mimeType: file.type, data: base64Data }; } else { const textContent = await file.text(); apiData = { textContent: textContent }; } return { id, file, name: file.name, type: file.type, apiData }; }) ); setSelectedFiles(prev => [...prev, ...processedFileObjects.filter(f => f)]); } return didProcessAnyFile; };
+        
+        const removeSelectedFile = (fileId) => { setSelectedFiles(prev => prev.filter(f => f.id !== fileId)); };
+
+        const handleInputFromContentEditable = () => {
+             setInputText(contentEditableRef.current?.innerText || ''); 
+        };
+        
+        const handleSubmit = (e) => { 
+            if(e) e.preventDefault(); 
+            // No currentUser check needed here as it's for local version
+            const currentText = contentEditableRef.current?.innerText.trim() || '';
+            if (!currentText && selectedFiles.length === 0) return; 
+            setUserHasScrolledUp(false); 
+            setChatError(null); 
+            onSendMessage(currentText, selectedFiles, isWebSearchEnabledState); 
+            if(contentEditableRef.current) contentEditableRef.current.innerText = '';
+            setInputText(''); 
+            setSelectedFiles([]); 
+        };
+
+        const handleContentEditableKeyDown = (e) => { 
+            if (e.key === 'Enter' && !e.shiftKey) { 
+                const isLikelyDesktop = window.innerWidth > 768; 
+                if (isLikelyDesktop) { 
+                    e.preventDefault();
+                    if (!isSendButtonActuallyDisabled) { 
+                        handleSubmit(e); 
+                    }
+                }
+            }
+        };
+
+        const isAiCurrentlyProcessing = messages.some(m => m.role === 'model' && m.isLoading && !m.isError);
+        const currentInputTextFromEditable = contentEditableRef.current?.innerText?.trim() || '';
+        const isSendButtonActuallyDisabled = (!isAiCurrentlyProcessing && (isLoading || (currentInputTextFromEditable === '' && selectedFiles.length === 0)));
+        
+        const handleToggleWebSearch = (newValue) => {
+            if (!(isLoading || isAiCurrentlyProcessing)) {
+                setIsWebSearchEnabledState(newValue);
+            }
+        };
+        
+        const sendOrStopButtonBaseClasses = "w-8 h-8 flex items-center justify-center font-semibold rounded-full transition-all duration-150 ease-in-out transform active:animate-button-press focus:outline-none";
+        let sendOrStopButtonDynamicClasses = "";
+
+        if (isAiCurrentlyProcessing) { 
+            sendOrStopButtonDynamicClasses = "bg-slate-500 hover:bg-slate-600 text-white"; 
+        } else if (isSendButtonActuallyDisabled) { 
+            sendOrStopButtonDynamicClasses = "bg-brand-send-active opacity-60 text-white cursor-not-allowed"; 
+        } else { 
+            sendOrStopButtonDynamicClasses = "bg-brand-send-active hover:bg-brand-send-hover text-white focus:ring-2 focus:ring-offset-1 focus:ring-brand-send-active/50";
+        }
+        
+        useEffect(() => { 
+          if (contentEditableRef.current) {
+            contentEditableRef.current.innerText = ''; 
+          }
+          setInputText('');
+          setSelectedFiles([]);
+          setIsWebSearchEnabledState(false); 
+        }, [currentChatId]);
+
+        const activeMessages = messages.filter(m => (m.role !== 'system' || m.isError) && m.id !== 'loading_chat_indicator');
+
+
+        return (
+          <div className="w-full h-full flex flex-col bg-white md:rounded-xl shadow-chat-window overflow-hidden">
+            <header className="p-3 flex items-center justify-between flex-shrink-0 bg-white border-b border-border-light shadow-header">
+                <button 
+                  onClick={onToggleSidebarRequest} 
+                  className="md:hidden p-2 text-text-secondary hover:text-brand-primary rounded-full hover:bg-interactive-hover/70 transition-colors"
+                  aria-label="Toggle sidebar"
+                >
+                  <HamburgerIcon className="w-6 h-6" />
+                </button>
+                <h1 className="text-xl font-sans font-semibold text-gray-800 text-center flex-grow md:flex-grow-0">AlphaGPT</h1>
+                <div className="w-8 md:hidden"></div>
+            </header>
+            
+            <div ref={chatContainerRef} className="flex-grow p-4 md:p-5 space-y-3 md:space-y-4 overflow-y-auto chat-messages-container relative bg-surface-chat-area">
+                { activeMessages.length === 0 && !isLoading && ( 
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none p-8 animate-fade-in-up opacity-0" style={{animationDelay: '0.2s', animationFillMode: 'forwards'}}>
+                        <NewEmptyStateIconSVG className="w-16 h-16 mb-5 text-brand-send-active" /> {/* Icon size reduced */}
+                        <p className="text-2xl lg:text-3xl font-serif text-gray-800 leading-tight"> {/* Text size reduced */}
+                            How can I help you<br />today?
+                        </p>
+                         {currentChatId && <p className="text-xs text-text-subtle mt-3">Send a message to get started in this chat.</p>}
+                    </div> 
+                )}
+
+                {messages.map((msg, idx) => { 
+                    const isThisMessageAiAndFinalized = msg.role === 'model' && !msg.isLoading && !msg.isError && (msg.parts?.[0]?.text || msg.text);
+                    let canThisAiMessageBeRegenerated = false;
+                    if(isThisMessageAiAndFinalized) {
+                        let userPromptIndex = -1;
+                        for(let i = idx - 1; i >= 0; i--) {
+                            if (messages[i].role === 'user') {
+                                let interveningUserMessageBetweenThisAiAndItsUserPrompt = false;
+                                for (let j = i + 1; j < idx; j++) {
+                                     if (messages[j].role === 'user') {
+                                        interveningUserMessageBetweenThisAiAndItsUserPrompt = true;
+                                        break;
+                                    }
+                                }
+                                if (!interveningUserMessageBetweenThisAiAndItsUserPrompt) {
+                                    userPromptIndex = i;
+                                    break;
+                                }
+                            }
+                        }
+                        canThisAiMessageBeRegenerated = userPromptIndex !== -1;
+                    }
+
+                    return (
+                        <React.Fragment key={msg.id}>
+                            {((msg.role === 'user' && ( (msg.parts && msg.parts[0]?.text) || msg.text || msg.attachedFiles?.length > 0 || msg.uiOnlyAttachedFiles?.length > 0)) ||
+                             (msg.role === 'model' && (!msg.isLoading || (msg.isLoading && (msg.text || msg.parts?.[0]?.text )))) || 
+                             msg.role === 'system' ||
+                             msg.isError) && (
+                                <div> 
+                                    <ChatMessageItem 
+                                        message={msg} 
+                                        onDeleteAiMessagePair={onDeleteAiMessagePair}
+                                        selectedUserMessageId={selectedUserMessageId}
+                                        onSelectUserMessage={setSelectedUserMessageId}
+                                    /> 
+                                </div>
+                            )}
+                            {msg.role === 'model' && msg.isLoading && !(msg.text || msg.parts?.[0]?.text) && !msg.isError && ( 
+                                <ThinkingAnimation isPotentiallySearching={msg.searchUsed && msg.loadingText === "Searching..."} />
+                            )}
+
+                            {isThisMessageAiAndFinalized && (
+                                <div className={`flex items-center space-x-2 mt-1 ml-0 justify-start mb-2`}> 
+                                    {canThisAiMessageBeRegenerated && (
+                                        <button 
+                                            onClick={() => { 
+                                                setChatError(null); 
+                                                onRegenerateLastTextMessage(msg.id, isWebSearchEnabledState);
+                                                setSelectedUserMessageId(null);
+                                            }} 
+                                            className="p-1.5 rounded-full text-text-subtle hover:text-brand-primary hover:bg-interactive-hover/70 transition-all duration-150 group focus:outline-none focus:ring-1 focus:ring-brand-primary/50"
+                                            aria-label="Regenerate response" 
+                                            disabled={isLoading || isAiCurrentlyProcessing} 
+                                        > 
+                                            <NewRefreshIcon className="w-5 h-5 transition-transform duration-200" />
+                                        </button> 
+                                    )}
+                                      <ChatMessageItemOptions 
+                                        message={msg} 
+                                        onDeleteAiMessagePair={onDeleteAiMessagePair} 
+                                      />
+                                </div>
+                            )}
+                        </React.Fragment>
+                    )
+                })}
+                <div ref={messagesEndRef} className="h-1" />
+            </div>
+            
+            <form onSubmit={handleSubmit} className="bg-surface-chat-area flex-shrink-0">
+              <div className="p-2 md:p-3">
+                <div
+                    className="flex flex-col bg-white border border-gray-200 rounded-xl p-2.5 shadow-sm focus-within:border-gray-300 focus-within:shadow-input-active-glow transition-all duration-150"
+                    onClick={(e) => {
+                        if (contentEditableRef.current && 
+                            !contentEditableRef.current.contains(e.target) && 
+                            e.target.tagName !== 'BUTTON' && 
+                            !e.target.closest('button') &&
+                           !e.target.closest('[aria-label="Attach file"]') && 
+                           !e.target.closest('[aria-label="Toggle Web Search"]') &&
+                           !e.target.closest('.relative') 
+                           ) {
+                           contentEditableRef.current.focus();
+                        }
+                    }}
+                >
+                  {selectedFiles.some(f => f.type.startsWith('image/')) && (
+                    <div className="image-preview-container-input">
+                        {selectedFiles.filter(f => f.type.startsWith('image/')).map(file => (
+                        <div key={file.id} className="relative w-14 h-14 rounded-md overflow-hidden shadow-sm group border border-gray-200">
+                            <img
+                            src={`data:${file.apiData.mimeType};base64,${file.apiData.data}`}
+                            alt={file.name}
+                            className="w-full h-full object-cover"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => removeSelectedFile(file.id)}
+                                className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/50 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition-opacity focus:outline-none opacity-100"
+                                aria-label="Remove image"
+                            >
+                                <NewCloseIconSVG className="w-3 h-3"/>
+                            </button>
+                        </div>
+                        ))}
+                    </div>
+                  )}
+                  {selectedFiles.some(f => !f.type.startsWith('image/')) && (
+                    <div className={`file-pill-container ${selectedFiles.some(f => f.type.startsWith('image/')) ? 'mt-1.5' : ''}`}>
+                        {selectedFiles.filter(f => !f.type.startsWith('image/')).map(file => (
+                        <div key={file.id} className="file-pill">
+                            <FileTextIcon className="file-pill-icon"/>
+                            <span className="file-pill-name">{file.name}</span>
+                            <button type="button" onClick={() => removeSelectedFile(file.id)} className="file-pill-remove">
+                                <i className="fas fa-times"></i>
+                            </button>
+                        </div>
+                        ))}
+                    </div>
+                  )}
+
+                  <div
+                    ref={contentEditableRef}
+                    contentEditable={!(isLoading || isAiCurrentlyProcessing)} 
+                    onInput={handleInputFromContentEditable}
+                    onPaste={handlePaste}
+                    onKeyDown={handleContentEditableKeyDown}
+                    data-placeholder={"Ask AlphaGPT..."}
+                    className={`content-editable-input w-full flex-1 text-sm md:text-[15px] focus:outline-none resize-none overflow-y-auto relative`}
+                    style={{ maxHeight: '100px', minHeight: '40px' }}
+                    suppressContentEditableWarning={true}
+                  >
+                  </div>
+
+                  <div className="flex justify-between items-end w-full pt-2.5 mt-auto">
+                    <div className="flex items-center">
+                        <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" multiple accept="image/*,.txt,text/plain" disabled={isLoading || isAiCurrentlyProcessing} />
+                        
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-200/70 border border-gray-300 transition-colors duration-150 disabled:opacity-50 flex-shrink-0 focus:outline-none"
+                          aria-label="Attach file"
+                          disabled={isLoading || isAiCurrentlyProcessing}
+                        >
+                          <PlusIcon />
+                        </button>
+                        
+                        <button
+                          type="button"
+                          onClick={() => handleToggleWebSearch(!isWebSearchEnabledState)}
+                          className={`w-8 h-8 flex items-center justify-center rounded-full border transition-colors duration-150 disabled:opacity-50 flex-shrink-0 focus:outline-none ml-1.5
+                            ${isWebSearchEnabledState
+                              ? 'bg-blue-500/10 border-blue-500/30 text-blue-500 hover:bg-blue-500/20' 
+                              : 'border-gray-300 text-gray-500 hover:text-gray-700 hover:bg-gray-200/70' 
+                            }
+                          `}
+                          aria-label="Toggle Web Search"
+                          aria-pressed={isWebSearchEnabledState}
+                          disabled={isLoading || isAiCurrentlyProcessing}
+                        >
+                          <GlobeIcon className="w-4 h-4" />
+                        </button>
+
+                    </div>
+                    <div className="flex items-end space-x-2"> {/* Increased space-x */}
+                        <ModelSelector
+                            models={AVAILABLE_MODELS}
+                            selectedModelId={selectedModelId}
+                            onSelectModel={onSelectModel}
+                            currentUser={true} // Always enabled in no-auth version
+                            isLoading={isLoading}
+                            isAiCurrentlyProcessing={isAiCurrentlyProcessing}
+                        />
+                        <button
+                            type={isAiCurrentlyProcessing ? "button" : "submit"}
+                            onClick={isAiCurrentlyProcessing ? onStopGeneration : undefined }
+                            disabled={isSendButtonActuallyDisabled}
+                            className={`${sendOrStopButtonBaseClasses} ${sendOrStopButtonDynamicClasses}`}
+                            style={{ overflow: 'hidden' }} 
+                            aria-label={isAiCurrentlyProcessing ? "Stop generation" : "Send message"}
+                        >
+                        {isAiCurrentlyProcessing ? (
+                            <i className="fas fa-stop text-sm"></i>
+                        ) : (
+                            <UpArrowSendIcon />
+                        )}
+                        </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>);
+      };
+      
+      const App = () => { 
+        // Removed Firebase auth states: currentUser, authLoading
+        const [chatMessages, setChatMessages] = useState([]); 
+        const [isChatLoading, setIsChatLoading] = useState(false); 
+        const [chatError, setChatError] = useState(null); 
+        const [currentChatId, setCurrentChatId] = useState(null); 
+        const [chatHistoryList, setChatHistoryList] = useState([]);
+        
+        const [isSidebarActuallyOpen, setIsSidebarActuallyOpen] = useState(false);
+        const [isPinUnlockModalOpen, setIsPinUnlockModalOpen] = useState(false);
+        const [pinUnlockError, setPinUnlockError] = useState(null);
+        const [isPinVerifiedForSession, setIsPinVerifiedForSession] = useState(false); 
+        const [localPin, setLocalPin] = useState(null); // For session-based PIN
+
+        const [isPinSettingsModalOpen, setIsPinSettingsModalOpen] = useState(false);
+        const [pinSettingsStatus, setPinSettingsStatus] = useState({ message: '', type: '' });
+        
+        const [selectedUserMessageId, setSelectedUserMessageId] = useState(null);
+        const [selectedModelId, setSelectedModelId] = useState(DEFAULT_MODEL_ID);
+
+
+        const initialLoadDoneRef = useRef(false); // Still useful for initial setup
+        const isStoppingGenerationRef = useRef(false);
+        const streamTextBuffer = useRef("");
+        const streamSourcesBuffer = useRef([]); 
+        
+        useEffect(() => { 
+            if (chatError) { 
+                const errorId = Date.now() + '_sys_validation_err'; 
+                const newErrorMsg = {id: errorId, role: 'system', text: chatError, isError: true, timestamp: new Date().getTime()};
+                setChatMessages(prev => { 
+                    const lastMessage = prev[prev.length -1]; 
+                    if(lastMessage && lastMessage.id.includes('_sys_validation_err') && lastMessage.text === chatError) return prev; 
+                    return [...prev, newErrorMsg]; 
+                }); 
+            }
+        }, [chatError]); 
+
+        // Simplified initial load: always start with no chat selected
+        useEffect(() => {
+            if (!initialLoadDoneRef.current) {
+                setCurrentChatId(null);
+                setChatMessages([]);
+                initialLoadDoneRef.current = true;
+            }
+        }, []);
+
+
+        const saveLocalPin = (newPin) => {
+            setLocalPin(newPin);
+            setIsPinVerifiedForSession(true); 
+            setPinSettingsStatus({ message: 'PIN set successfully for this session!', type: 'success' });
+            setTimeout(() => {
+                setIsPinSettingsModalOpen(false);
+                setPinSettingsStatus({ message: '', type: '' }); 
+            }, 1500);
+        };
+
+
+        const handleNewChat = useCallback(async () => {
+            setIsChatLoading(true); // Keep loading indicator for consistency
+            const newChatId = 'local_chat_' + Date.now().toString(36) + Math.random().toString(36).substring(2);
+            const newChat = {
+                id: newChatId,
+                title: "New Chat", 
+                createdAt: new Date().getTime(), // Use client time
+                messages: [] // Messages will be in chatMessages state, not here directly
+            };
+            
+            setChatHistoryList(prev => [newChat, ...prev]); // Add to top
+            setCurrentChatId(newChatId); 
+            setChatMessages([]);      
+            setChatError(null);
+            setIsSidebarActuallyOpen(false); 
+            setIsChatLoading(false);
+            return newChatId; // Return the ID for handleSendChatMessage
+          }, []); 
+        
+
+        useEffect(() => {
+          // When currentChatId changes, find the messages for that chat from chatHistoryList
+          // This is a simplified approach for local state.
+          // For a more robust local storage solution, messages might be stored per chat ID.
+          if (currentChatId) {
+              const activeChat = chatHistoryList.find(chat => chat.id === currentChatId);
+              // In this local version, messages are primarily managed by the global chatMessages state,
+              // filtered or set when a chat is selected.
+              // For simplicity, we'll assume chatMessages is correctly populated by onSendMessage.
+              // If we were to load messages from a more structured local storage, this is where it would happen.
+          } else {
+              setChatMessages([]); // Clear messages if no chat is active
+          }
+        }, [currentChatId, chatHistoryList]);
+
+
+        const getGeminiHistory = (currentMessagesFromState) => { 
+            // This function's core logic remains the same as it processes the message structure
+            const geminiMessages = currentMessagesFromState
+                .filter(msg => !(msg.role === 'system' || (msg.role === 'model' && msg.isLoading && !(msg.parts?.[0]?.text || msg.text) ) || msg.isError))
+                .map(msg => {
+                    let partsForGemini = [];
+                    if (msg.parts && Array.isArray(msg.parts)) { 
+                        partsForGemini = [...msg.parts];
+                    } else if (msg.text) { 
+                        partsForGemini = [{text: msg.text}];
+                    }
+                    
+                    if(msg.uiOnlyAttachedFiles && msg.uiOnlyAttachedFiles.length > 0){
+                        msg.uiOnlyAttachedFiles.forEach(file => {
+                            if (file.type.startsWith('image/') && file.apiData?.mimeType && file.apiData?.data) {
+                                partsForGemini.push({ inlineData: file.apiData });
+                            } else if ((file.name.toLowerCase().endsWith('.txt') || file.type === 'text/plain') && file.apiData?.textContent) {
+                                const fileContentMarker = `\n[Content of attached file: ${file.name}]\n`;
+                                if (!partsForGemini.some(p => p.text && p.text.includes(fileContentMarker))) {
+                                   partsForGemini.push({ text: `${fileContentMarker}${file.apiData.textContent}\n[End of file: ${file.name}]\n` });
+                                }
+                            }
+                        });
+                    } else if (msg.attachedFiles && msg.attachedFiles.length > 0 && msg.role === 'user') { 
+                        msg.attachedFiles.forEach(fileMeta => {
+                            if(fileMeta.type?.startsWith('image/') && fileMeta.apiData) { 
+                                if (!partsForGemini.some(p => p.inlineData && p.inlineData.data === fileMeta.apiData.data)) {
+                                   partsForGemini.push({ inlineData: fileMeta.apiData });
+                                }
+                            }
+                        });
+                    }
+                    return { role: msg.role, parts: partsForGemini }; 
+                }).filter(entry => entry.parts && entry.parts.length > 0 && entry.parts.some(p => (p.text && p.text.trim()) || p.inlineData ));
+
+            if (geminiMessages.length > 0 && geminiMessages[0].role === 'model') {
+                const firstUserIndex = geminiMessages.findIndex(m => m.role === 'user');
+                if (firstUserIndex === -1) return []; 
+                const slicedHistory = geminiMessages.slice(firstUserIndex);
+                if (slicedHistory.length > 1 && slicedHistory[0].role === slicedHistory[1].role) {
+                    return [slicedHistory[0]]; 
+                }
+                return slicedHistory;
+            }
+            return geminiMessages;
+        };
+
+
+        useEffect(() => { if (!API_KEY || API_KEY === "YOUR_GEMINI_API_KEY") { setChatError("Gemini API Key is not configured."); } }, []); 
+        
+        const handleStopGeneration = useCallback(() => {
+            isStoppingGenerationRef.current = true;
+            setIsChatLoading(false); 
+            setChatMessages(prevMessages => {
+                return prevMessages.map(msg => {
+                    if (msg.role === 'model' && msg.isLoading) {
+                        // ... (rest of stop generation logic is the same)
+                        let newText = streamTextBuffer.current || (msg.parts?.[0]?.text || msg.text) || ""; 
+                        const stopNotice = "*Generation stopped by user.*";
+                        if (!newText && !(msg.parts?.[0]?.text || msg.text)){ newText = stopNotice;
+                        } else if (newText && !newText.includes(stopNotice)) {
+                            const currentContent = newText;
+                            if (currentContent.trim()) {
+                                let processedContent = currentContent;
+                                const isInCodeBlock = (processedContent.match(/```/g) || []).length % 2 !== 0;
+                                if (isInCodeBlock) { processedContent += "\n```"; }
+                                newText = processedContent + (processedContent.trim() ? "\n\n---\n" : "") + stopNotice;
+                            } else { newText = stopNotice; }
+                        } else if (!newText && (msg.parts?.[0]?.text || msg.text) && !(msg.parts?.[0]?.text || msg.text).includes(stopNotice)){ 
+                             newText = (msg.parts?.[0]?.text || msg.text) + ((msg.parts?.[0]?.text || msg.text).trim() ? "\n\n---\n" : "") + stopNotice;
+                        }
+                        return { ...msg, parts: [{text: newText}], text: newText, isLoading: false, sources: streamSourcesBuffer.current.length > 0 ? [...streamSourcesBuffer.current] : msg.sources };
+                    }
+                    return msg;
+                });
+            });
+        }, []); 
+        
+        const handleDeleteChat = async (chatIdToDelete) => {
+            setChatHistoryList(prev => prev.filter(chat => chat.id !== chatIdToDelete));
+            if (currentChatId === chatIdToDelete) {
+                setCurrentChatId(null); 
+                setChatMessages([]); 
+            }
+        };
+        
+        const mergeCitations = (existingSources, newSources) => { /* ... (unchanged) ... */ 
+             if (!newSources || newSources.length === 0) return existingSources;
+            const existingUris = new Set((existingSources || []).map(s => s.uri));
+            const uniqueNewSources = newSources.filter(src => src.uri && !existingUris.has(src.uri));
+            return [...(existingSources || []), ...uniqueNewSources];
+        };
+
+        const addMessageToLocalState = (role, text, files, aiSpecificData = {}) => {
+            const messageId = Date.now().toString(36) + Math.random().toString(36).substring(2);
+            const messageParts = [];
+            if (text) messageParts.push({ text: text });
+
+            const attachedFilesForState = files.map(f => ({
+                id: f.id, // From file processing
+                name: f.name,
+                type: f.type,
+                apiData: f.apiData // Store for rendering and potential resend
+            }));
+            
+            const newMessage = {
+                id: messageId,
+                role: role,
+                parts: messageParts.length > 0 ? messageParts : [{text: ""}],
+                timestamp: new Date().getTime(),
+                ...(role === 'user' && attachedFilesForState.length > 0 && { attachedFiles: attachedFilesForState }),
+                ...(role === 'model' && aiSpecificData.sources && { sources: aiSpecificData.sources }),
+                ...(role === 'model' && aiSpecificData.searchUsed !== undefined && { searchUsed: aiSpecificData.searchUsed }),
+                ...(role === 'model' && aiSpecificData.modelUsed && { modelUsed: aiSpecificData.modelUsed }),
+                isLoading: role === 'model' ? aiSpecificData.isLoading : false, // For AI placeholder
+                isError: aiSpecificData.isError || false,
+                loadingText: role === 'model' ? aiSpecificData.loadingText : ''
+            };
+
+            setChatMessages(prev => [...prev, newMessage]);
+            return messageId; 
+        };
+        
+        const updateMessageInLocalState = (messageId, newText, isLoading, isError, aiSpecificData = {}) => {
+             setChatMessages(prev => prev.map(msg => {
+                if (msg.id === messageId) {
+                    return {
+                        ...msg,
+                        text: newText,
+                        parts: [{text: newText}],
+                        isLoading: isLoading,
+                        isError: isError,
+                        sources: aiSpecificData.sources !== undefined ? aiSpecificData.sources : msg.sources,
+                        searchUsed: aiSpecificData.searchUsed !== undefined ? aiSpecificData.searchUsed : msg.searchUsed,
+                        modelUsed: aiSpecificData.modelUsed !== undefined ? aiSpecificData.modelUsed : msg.modelUsed,
+                        loadingText: isLoading ? (aiSpecificData.loadingText || msg.loadingText) : "",
+                        timestamp: new Date().getTime() // Update timestamp to reflect change
+                    };
+                }
+                return msg;
+            }));
+        };
+        
+        const _streamAiResponse = async (
+            originalPromptPartsForGemini, 
+            targetAiMessageUiId, // This will be the ID of the placeholder AI message
+            historyForGeminiInit, 
+            useSearchForThisTurn,
+            currentLoadingText,
+            modelToUse 
+        ) => {
+            setIsChatLoading(true);
+            streamTextBuffer.current = "";
+            streamSourcesBuffer.current = []; 
+            
+            if (isStoppingGenerationRef.current) { 
+                setIsChatLoading(false);
+                return;
+            }
+
+            // Initial update for the placeholder is already done by addMessageToLocalState
+            // before calling this function.
+
+            const performUiUpdateWithText = (isLoading = true) => { 
+                if (!isStoppingGenerationRef.current || !isLoading) { 
+                    updateMessageInLocalState(targetAiMessageUiId, streamTextBuffer.current, isLoading, false, {
+                        sources: streamSourcesBuffer.current.length > 0 ? [...streamSourcesBuffer.current] : null,
+                        searchUsed: useSearchForThisTurn,
+                        modelUsed: modelToUse,
+                        loadingText: isLoading ? (firstChunkReceived ? "" : currentLoadingText) : "" 
+                    });
+                }
+            };
+
+            let firstChunkReceived = false; 
+            try {
+                const modelConfig = { model: modelToUse, systemInstruction: getSystemInstruction() }; 
+                if (useSearchForThisTurn) { 
+                    modelConfig.tools = [{ googleSearch: {} }];
+                }
+                const chatModel = genAI.getGenerativeModel(modelConfig);
+                const chatSession = chatModel.startChat({ history: historyForGeminiInit });
+                
+                if (isStoppingGenerationRef.current) {
+                     setIsChatLoading(false);
+                     return;
+                }
+
+                const result = await chatSession.sendMessageStream(originalPromptPartsForGemini);
+                
+                for await (const chunk of result.stream) { 
+                    if (isStoppingGenerationRef.current) break;
+                    if(!firstChunkReceived && chunk.text()?.trim()){ 
+                         firstChunkReceived = true;
+                    }
+                    const rawChunkText = chunk.text();
+                    let chunkTextForDisplay = "";
+                    if (typeof rawChunkText === 'string') {
+                        const lines = rawChunkText.split('\n');
+                        const filteredLines = lines.filter(line => 
+                            !line.trim().startsWith("tool_code") &&
+                            !line.trim().startsWith("print(google_search.search")
+                        );
+                        if (filteredLines.length > 0 && filteredLines.some(line => line.trim() !== "" || lines.length === filteredLines.length )) {
+                           chunkTextForDisplay = filteredLines.join('\n');
+                        } else if (filteredLines.length === 0 && rawChunkText.trim() !== "") {
+                            chunkTextForDisplay = ""; 
+                        } else {
+                            chunkTextForDisplay = rawChunkText; 
+                        }
+                    }
+                    let sourcesDeltaProcessed = false;
+                    if (chunk.candidates && chunk.candidates[0]?.groundingMetadata?.groundingChunks) {
+                        const sourcesDelta = chunk.candidates[0].groundingMetadata.groundingChunks
+                          .filter(gc => gc.web && gc.web.uri)
+                          .map(gc => ({ uri: gc.web.uri, title: gc.web.title || gc.web.uri }));
+                        if (sourcesDelta && sourcesDelta.length > 0) {
+                           streamSourcesBuffer.current = mergeCitations(streamSourcesBuffer.current, sourcesDelta);
+                           sourcesDeltaProcessed = true;
+                        }
+                    }
+
+                    if (chunkTextForDisplay.length > 0) {
+                        const textParts = chunkTextForDisplay.split(/(\s+|\*+|`+|_|~|---|===|\n)/);
+                        for (const part of textParts) {
+                            if (isStoppingGenerationRef.current) break;
+                            if (part.length === 0) continue;
+                            streamTextBuffer.current += part;
+                            performUiUpdateWithText(); 
+                            await new Promise(resolve => setTimeout(resolve, Math.min(60, Math.max(15, part.length * 10)))); 
+                        }
+                    } else if (sourcesDeltaProcessed) {
+                        if(streamTextBuffer.current || firstChunkReceived) performUiUpdateWithText(); 
+                    }
+                    if (isStoppingGenerationRef.current) break;
+                }
+                
+                let finalText = streamTextBuffer.current;
+                const stopNoticeStr = "*Generation stopped by user.*";
+                if (isStoppingGenerationRef.current && !finalText.includes(stopNoticeStr)) {
+                    const isInCodeBlock = (finalText.match(/```/g) || []).length % 2 !== 0;
+                    if (isInCodeBlock) finalText += "\n```";
+                    finalText += (finalText.trim() ? "\n\n---\n" : "") + stopNoticeStr;
+                } else if (!isStoppingGenerationRef.current && !finalText.trim() && (!streamSourcesBuffer.current || streamSourcesBuffer.current.length === 0)) {
+                    if (useSearchForThisTurn) { 
+                        finalText = "I'm having a little trouble searching right now, or perhaps clear information isn't available on this topic. You could try regenerating the message, or ask your question a bit differently or more clearly. Thank you! 🙏";
+                    } else {
+                        finalText = "I think I had some trouble understanding. Could you please clarify your question? 🤔";
+                    }
+                } else if (!isStoppingGenerationRef.current && !finalText.trim() && streamSourcesBuffer.current && streamSourcesBuffer.current.length > 0) {
+                     finalText = "*Content is based on search results.*";
+                }
+                streamTextBuffer.current = finalText;
+                updateMessageInLocalState(targetAiMessageUiId, finalText, false, false, {
+                    sources: streamSourcesBuffer.current.length > 0 ? [...streamSourcesBuffer.current] : null,
+                    searchUsed: useSearchForThisTurn,
+                    modelUsed: modelToUse
+                });
+
+            } catch (err) {
+                console.error("AI stream error in _streamAiResponse:", err);
+                let errorTextForUser = "A technical difficulty occurred. Please try again."; 
+                if (err.message?.toLowerCase().includes("api key not valid")) errorTextForUser = "It seems there's an issue with the API key.";
+                else if (err.message?.toLowerCase().includes("candidate was blocked")) errorTextForUser = "I cannot provide this response due to safety policies.";
+                else if (err.message?.toLowerCase().includes("quota")) errorTextForUser = "The API usage limit has been reached.";
+                
+                streamTextBuffer.current = errorTextForUser;
+                updateMessageInLocalState(targetAiMessageUiId, `Error: ${errorTextForUser}`, false, true, { 
+                    searchUsed: useSearchForThisTurn, 
+                    sources: null,
+                    modelUsed: modelToUse
+                });
+            } finally {
+                setIsChatLoading(false);
+            }
+        };
+
+        const handleSendChatMessage = useCallback(async (messageText, filesToSendFromInput, userWebSearchPreference) => {
+            let activeChatId = currentChatId;
+            if (!activeChatId) { 
+                const newChatIdAttempt = await handleNewChat(); // Creates and sets currentChatId
+                if (!newChatIdAttempt) {
+                     setChatError("Could not start a new chat. Please try again.");
+                     return;
+                }
+                activeChatId = newChatIdAttempt; 
+            }
+
+            if (!messageText.trim() && filesToSendFromInput.length === 0) return;
+
+            isStoppingGenerationRef.current = false; 
+            setChatError(null);
+            if (!API_KEY || API_KEY === "YOUR_GEMINI_API_KEY") {
+                setChatError("Gemini API Key is not configured.");
+                return;
+            }
+            
+            addMessageToLocalState('user', messageText, filesToSendFromInput);
+            
+            const aiPlaceholderUiId = Date.now().toString(36) + '_model_placeholder';
+            const needsSearch = userWebSearchPreference;
+            const finalLoadingText = needsSearch ? "Searching..." : "Thinking...";
+            
+            addMessageToLocalState('model', '', [], { 
+                isLoading: true, 
+                isError: false, 
+                searchUsed: needsSearch, 
+                loadingText: finalLoadingText,
+                id: aiPlaceholderUiId, // Ensure placeholder has an ID
+                modelUsed: selectedModelId
+            });
+
+            const currentUserMessagePartsForGemini = [];
+            if (messageText.trim()) {
+                currentUserMessagePartsForGemini.push({ text: messageText.trim() });
+            }
+            filesToSendFromInput.forEach(file => {
+                if (file.type.startsWith('image/') && file.apiData.mimeType && file.apiData.data) {
+                    currentUserMessagePartsForGemini.push({ inlineData: file.apiData });
+                } else if ((file.name.toLowerCase().endsWith('.txt') || file.type === 'text/plain') && file.apiData.textContent) {
+                    currentUserMessagePartsForGemini.push({ text: `\n[Content of attached file: ${file.name}]\n${file.apiData.textContent}\n[End of file: ${file.name}]\n` });
+                }
+            });
+            
+            const currentChatMessagesSnapshot = [...chatMessages]; 
+            const userMessageForHistory = {
+                id: 'temp_user_msg_for_history_' + Date.now(), // Temporary ID for history construction
+                role: 'user',
+                parts: currentUserMessagePartsForGemini,
+                uiOnlyAttachedFiles: filesToSendFromInput // Important for getGeminiHistory
+            };
+            const historyForGemini = getGeminiHistory([...currentChatMessagesSnapshot, userMessageForHistory]);
+
+            if (currentUserMessagePartsForGemini.length > 0) {
+                await _streamAiResponse(
+                    currentUserMessagePartsForGemini, 
+                    aiPlaceholderUiId, 
+                    historyForGemini, 
+                    needsSearch, 
+                    finalLoadingText,
+                    activeChatId, // Not used for DB saving, but kept for consistency
+                    false,
+                    selectedModelId
+                );
+            } else { 
+                 updateMessageInLocalState(aiPlaceholderUiId, "No valid content to send.", false, true);
+                setIsChatLoading(false);
+            }
+            
+        }, [chatMessages, currentChatId, handleNewChat, selectedModelId]); 
+
+
+        const handleRegenerateLastTextMessage = useCallback(async (aiMessageIdToRegenerate, userWebSearchPreference) => { 
+            if (!currentChatId) { // No currentUser check needed for local version
+                setChatError("No active chat to regenerate from.");
+                return;
+            }
+            isStoppingGenerationRef.current = false; 
+            setChatError(null);
+            if (!API_KEY || API_KEY === "YOUR_GEMINI_API_KEY") {
+                setChatError("API Key is not configured for regeneration.");
+                return;
+            }
+
+            const messagesForCurrentChat = [...chatMessages];
+            let userPromptMsgForRegen = null;
+            let historyUpToUserPrompt = [];
+            
+            let aiMsgIndex = messagesForCurrentChat.findIndex(m => m.id === aiMessageIdToRegenerate && m.role === 'model');
+            if (aiMsgIndex === -1) {
+                console.warn("Regen: AI message not found in current UI state. ID:", aiMessageIdToRegenerate);
+                setChatError("Cannot regenerate: Original AI message not found.");
+                return;
+            }
+            const modelUsedForOriginalResponse = messagesForCurrentChat[aiMsgIndex].modelUsed || selectedModelId;
+
+            for (let i = aiMsgIndex - 1; i >= 0; i--) {
+                if (messagesForCurrentChat[i].role === 'user') {
+                    let interveningUserMessage = false;
+                    for (let j = i + 1; j < aiMsgIndex; j++) {
+                        if (messagesForCurrentChat[j].role === 'user') {
+                            interveningUserMessage = true;
+                            break;
+                        }
+                    }
+                    if (!interveningUserMessage) {
+                        userPromptMsgForRegen = messagesForCurrentChat[i];
+                        historyUpToUserPrompt = getGeminiHistory(messagesForCurrentChat.slice(0, i)); 
+                        break;
+                    }
+                }
+            }
+            
+            if (!userPromptMsgForRegen) {
+                console.warn("Regen: User prompt not found for AI msg. AI ID:", aiMessageIdToRegenerate);
+                setChatError("Cannot regenerate: Original user prompt not found.");
+                return;
+            }
+            
+            const needsSearch = userWebSearchPreference;
+            const finalLoadingText = needsSearch ? "Searching..." : "Thinking...";
+            
+            const promptPartsForRegen = [];
+             if(userPromptMsgForRegen.parts && Array.isArray(userPromptMsgForRegen.parts)){
+                promptPartsForRegen.push(...userPromptMsgForRegen.parts.filter(p => p.text || p.inlineData)); 
+            } else if (userPromptMsgForRegen.text) { 
+                 promptPartsForRegen.push({text: userPromptMsgForRegen.text});
+            }
+            if (userPromptMsgForRegen.attachedFiles && userPromptMsgForRegen.attachedFiles.length > 0) {
+                userPromptMsgForRegen.attachedFiles.forEach(fileMeta => {
+                    if(fileMeta.type?.startsWith('image/') && fileMeta.apiData) { 
+                        if (!promptPartsForRegen.some(p => p.inlineData && p.inlineData.data === fileMeta.apiData.data)) { 
+                           promptPartsForRegen.push({ inlineData: fileMeta.apiData });
+                        }
+                    }
+                });
+            }
+
+
+            if (promptPartsForRegen.length > 0) {
+                 // For regeneration, we update the existing AI message in place.
+                updateMessageInLocalState(aiMessageIdToRegenerate, "", true, false, { loadingText: finalLoadingText, modelUsed: modelUsedForOriginalResponse });
+                await _streamAiResponse(
+                    promptPartsForRegen, 
+                    aiMessageIdToRegenerate, 
+                    historyUpToUserPrompt, 
+                    needsSearch, 
+                    finalLoadingText,
+                    currentChatId, // Not used for DB, kept for consistency
+                    true,
+                    modelUsedForOriginalResponse
+                );
+            } else { 
+                updateMessageInLocalState(aiMessageIdToRegenerate, "No content found to regenerate.", false, true);
+                setIsChatLoading(false);
+            }
+        }, [chatMessages, currentChatId, selectedModelId]); 
+
+        const handleRequestToggleSidebar = () => {
+            if (!localPin) { 
+                 setIsPinSettingsModalOpen(true); 
+                 setPinSettingsStatus({ message: 'Please set a PIN to secure your chat history for this session.', type: 'info' });
+                 return;
+            }
+
+            if (isPinVerifiedForSession) {
+                setIsSidebarActuallyOpen(prev => !prev);
+            } else {
+                setPinUnlockError(null);
+                setIsPinUnlockModalOpen(true);
+                setIsSidebarActuallyOpen(false); 
+            }
+        };
+    
+        const handleSubmitUnlockPin = (enteredPin) => {
+            if (enteredPin === localPin) {
+                setIsPinVerifiedForSession(true);
+                setIsPinUnlockModalOpen(false);
+                setPinUnlockError(null);
+                setIsSidebarActuallyOpen(true); 
+            } else {
+                setPinUnlockError("Incorrect PIN. Please try again.");
+            }
+        };
+
+        const handleDeleteAiMessagePair = async (aiMessageId) => {
+            const currentMessages = [...chatMessages];
+            const aiMessageIndex = currentMessages.findIndex(msg => msg.id === aiMessageId);
+    
+            if (aiMessageIndex === -1) {
+                setChatError("Could not find the AI message to delete.");
+                return;
+            }
+    
+            const idsToDelete = [aiMessageId];
+    
+            if (aiMessageIndex > 0) {
+                let precedingUserMessage = null;
+                for (let i = aiMessageIndex - 1; i >= 0; i--) {
+                    if (currentMessages[i].role === 'model') {
+                        break;
+                    }
+                    if (currentMessages[i].role === 'user') {
+                         let interveningUserMessage = false;
+                        for (let k = i + 1; k < aiMessageIndex; k++) {
+                            if (currentMessages[k].role === 'user') {
+                                interveningUserMessage = true;
+                                break;
+                            }
+                        }
+                        if (!interveningUserMessage) {
+                           precedingUserMessage = currentMessages[i];
+                        }
+                        break;
+                    }
+                }
+                if (precedingUserMessage) {
+                    idsToDelete.push(precedingUserMessage.id);
+                }
+            }
+            setChatMessages(prev => prev.filter(msg => !idsToDelete.includes(msg.id)));
+        };
+
+
+        // No AuthPage, app loads directly
+        return (
+            <div className="h-full text-text-primary flex font-sans bg-surface-main">
+                <PinUnlockModal
+                    isOpen={isPinUnlockModalOpen}
+                    onClose={() => setIsPinUnlockModalOpen(false)}
+                    onSubmitPin={handleSubmitUnlockPin}
+                    pinError={pinUnlockError}
+                />
+                <PinSettingsModal
+                    isOpen={isPinSettingsModalOpen}
+                    onClose={() => { setIsPinSettingsModalOpen(false); setPinSettingsStatus({ message: '', type: '' }); }}
+                    onSetPin={(newPin) => saveLocalPin(newPin)} // Uses local save
+                    currentPin={localPin}
+                    statusMessage={pinSettingsStatus.message}
+                    statusType={pinSettingsStatus.type}
+                />
+                <Sidebar 
+                    chatHistory={chatHistoryList}
+                    onSelectChat={(chatId) => {
+                        setCurrentChatId(chatId);
+                        // Logic to load messages for 'chatId' into chatMessages if storing per chat
+                        // For now, chatMessages is global for the active chat
+                        const chat = chatHistoryList.find(c => c.id === chatId);
+                        setChatMessages(chat ? (chat.messages || []) : []); // Assuming messages stored in chatHistory item
+                        if (isSidebarActuallyOpen) setIsSidebarActuallyOpen(false);
+                        setSelectedUserMessageId(null); 
+                    }}
+                    currentChatId={currentChatId}
+                    onNewChat={() => {
+                        handleNewChat();
+                        if (isSidebarActuallyOpen) setIsSidebarActuallyOpen(false);
+                        setSelectedUserMessageId(null);
+                    }}
+                    isOpen={isSidebarActuallyOpen}
+                    setIsOpen={setIsSidebarActuallyOpen} 
+                    onDeleteChat={handleDeleteChat}
+                    // onLogout removed
+                    onOpenPinSettings={() => {
+                        setPinSettingsStatus({ message: '', type: ''}); 
+                        setIsPinSettingsModalOpen(true);
+                    }}
+                    // userEmail removed
+                />
+                <div className="flex-grow h-full flex flex-col min-w-0"> 
+                    <ChatInterface 
+                        messages={chatMessages} 
+                        onSendMessage={handleSendChatMessage} 
+                        isLoading={isChatLoading} 
+                        onStopGeneration={handleStopGeneration} 
+                        onRegenerateLastTextMessage={handleRegenerateLastTextMessage} 
+                        onNewChat={handleNewChat} 
+                        setChatError={setChatError} 
+                        currentChatId={currentChatId}
+                        onToggleSidebarRequest={handleRequestToggleSidebar}
+                        currentUser={true} // Simulate logged-in state for UI enabling
+                        onDeleteAiMessagePair={handleDeleteAiMessagePair}
+                        selectedUserMessageId={selectedUserMessageId}
+                        setSelectedUserMessageId={setSelectedUserMessageId}
+                        selectedModelId={selectedModelId}
+                        onSelectModel={setSelectedModelId}
+                    />
+                </div>
+            </div>
+        );
+      };
+
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(<React.StrictMode><App /></React.StrictMode>);
     </script>
   </body>
 </html>
+```
