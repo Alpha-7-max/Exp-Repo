@@ -13,6 +13,7 @@
     <!-- Tailwind CSS with custom theme -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
+      // UPDATED: Added a neutral palette for refined black/gray usage.
       tailwind.config = {
         theme: {
           extend: {
@@ -51,26 +52,41 @@
 </script>
     
     <style>
+        /* UPDATED: Setting the base font to the new 'Inter' font */
         body {
             font-family: 'Inter', sans-serif;
             overflow: hidden; 
         }
         
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
 
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
         
-        @keyframes blink { 50% { opacity: 0; } }
-        .animate-blink { animation: blink 1s step-start infinite; }
-
-        .toggle-dot { transition: transform .3s ease-in-out, background-color .3s ease-in-out; }
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+        .animate-blink {
+            animation: blink 1s step-start infinite;
+        }
     </style>
 </head>
 <body class="bg-white">
@@ -80,7 +96,7 @@
 const process = { env: { API_KEY: "AIzaSyDgEdgBX2VWf2PO4X29haQzISTDTemzuW4" } };
 
 // --- Dependencies ---
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import ReactDOM from 'react-dom/client';
 import { GoogleGenAI } from "@google/genai";
 import ReactMarkdown from 'react-markdown';
@@ -101,16 +117,17 @@ const ResearchStage = {
 
 // --- constants.ts ---
 const STAGE_MESSAGES = {
-  [ResearchStage.IDLE]: 'Ready for your next query.',
+  [ResearchStage.IDLE]: 'Ready for research. Enter a topic or question.',
   [ResearchStage.OPTIMIZING]: 'Optimizing search query...',
   [ResearchStage.SEARCHING]: 'Gathering relevant sources...',
   [ResearchStage.ANALYZING]: 'Performing deep analysis of sources...',
-  [ResearchStage.COMPILING]: 'Generating response...',
-  [ResearchStage.DONE]: 'Response complete. Ready for next query.',
+  [ResearchStage.COMPILING]: 'Synthesizing analysis and compiling report...',
+  [ResearchStage.DONE]: 'Research complete. The report is ready.',
   [ResearchStage.ERROR]: 'An error occurred. Please try again.',
 };
 
 // --- services/geminiService.ts ---
+// Unchanged from previous version
 const translateAndEnhanceQuery = async (query, ai) => {
     const prompt = `You are an expert search query enhancer. Your task is to take a user's query, which might be in any language, and convert it into a highly effective, detailed English search query suitable for academic and web research. **User's Original Query:** "${query}" **Instructions:** 1. First, identify the language of the original query. 2. Translate the query into English. 3. Enhance the translated English query by adding relevant keywords, rephrasing it for clarity, and making it more specific to yield the best possible search results. 4. Return ONLY a single JSON object with one key: "enhanced_query". Do not include any other text, markdown, or explanations. **Example:** Original Query: "एलएलएम के नैतिक प्रभाव क्या हैं?" Your Output: { "enhanced_query": "ethical implications of large language models (LLMs) in society and AI development" } Now, provide the JSON output for the user's original query provided above.`;
     try {
@@ -133,19 +150,14 @@ const analyzeSources = async (sources, ai) => {
 };
 const generateReportStream = async (query, sources, ai) => {
     const sourcesText = sources.filter(s => s.analysis && !s.analysis.includes("failed")).map((s, i) => `Source [${i+1}] (${s.title}):\nURL: ${s.url}\nAI-Generated Analysis: ${s.analysis}`).join('\n\n');
-    const prompt = `You are a Deep Research Agent, an expert analyst. Your task is to synthesize the provided **AI-generated analyses of web sources** into a comprehensive, well-structured, and human-like research report. **Original Research Question (from the user):** "${query}" **Provided Source Analyses:**\n---\n${sourcesText}\n---\n**Instructions:** 1. **Synthesize from Analysis:** Your primary material is the AI-generated analysis for each source. Weave these insights together into a coherent narrative that directly answers the **original research question** with deep insight. 2. **Human-like Tone:** Write in a clear, professional, and engaging style. 3. **Structure and Formatting:** Use advanced Markdown for clear structure (H1, H2, H3, lists, tables, blockquotes). 4. **Do Not Cite Inline:** Do not use parenthetical citations like \`(Source [1])\`. 5. **Provide a Conclusion:** End with a "Conclusion" section summarizing the key takeaways. 6. **Do Not Create a Source List:** Do not create a "Sources" section at the end of your report. Begin the report now.`;
+    const prompt = `You are a Deep Research Agent, an expert analyst. Your task is to synthesize the provided **AI-generated analyses of web sources** into a comprehensive, well-structured, and human-like research report. **Original Research Question (from the user):** "${query}" **Provided Source Analyses:**\n---\n${sourcesText}\n---\n**Instructions:** 1. **Synthesize from Analysis:** Your primary material is the AI-generated analysis for each source. Weave these insights together into a coherent narrative that directly answers the **original research question** with deep insight. 2. **Human-like Tone:** Write in a clear, professional, and engaging style. 3. **Structure and Formatting:** Use advanced Markdown for clear structure (H1, H2, H3, lists, tables, blockquotes). 4. **Cite Your Sources:** When you use information, cite it parenthetically, like \`(Source [1])\`. All claims must be attributable to the provided source analyses. 5. **Provide a Conclusion:** End with a "Conclusion" section summarizing the key takeaways. 6. **Final Section - Sources:** At the very end, create a H2 section titled "Sources" and list all used sources with their titles and URLs as a Markdown list. Example: \`* [Source Title](URL)\`. Begin the report now.`;
     try {
         return await ai.models.generateContentStream({ model: 'gemini-2.0-flash', contents: prompt, config: { temperature: 0.6 } });
     } catch (error) { console.error("Error generating report:", error); throw new Error(JSON.stringify(error) || "Failed to generate the research report."); }
 };
-const generateSimpleResponseStream = async (query, ai) => {
-    const prompt = `You are a helpful conversational AI assistant. Respond to the user's query in a clear and concise way. User Query: "${query}"`;
-    try {
-        return await ai.models.generateContentStream({ model: 'gemini-2.0-flash', contents: prompt, config: { temperature: 0.7 } });
-    } catch (error) { console.error("Error generating simple response:", error); throw new Error(JSON.stringify(error) || "Failed to generate a response."); }
-};
 
 // --- services/searchService.ts ---
+// Unchanged from previous version
 const TAVILY_API_KEY = "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";
 const BRAVE_API_KEY = "BSA2_RrvzlC4vU0-05O6FWmpSMBR3_v";
 const fetchSourcesFromTavily = async (query) => { try { const response = await fetch('https://api.tavily.com/search', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ api_key: TAVILY_API_KEY, query: query, search_depth: 'advanced', max_results: 5, }), }); if (!response.ok) throw new Error(`Tavily API error: ${response.statusText}`); const data = await response.json(); return data.results.map((r) => ({ title: r.title, url: r.url, content: r.content })); } catch (e) { console.error("Error fetching from Tavily:", e); return []; } };
@@ -155,70 +167,55 @@ const fetchSources = async (query, ai) => { try { const [googleResults, tavilyRe
 
 
 // --- components/icons.tsx ---
+const SearchIcon = ({ className }) => ( <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}> <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /> </svg> );
 const LoadingSpinner = ({ className }) => ( <svg className={`animate-spin ${className}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"> <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle> <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path> </svg> );
-const SendIcon = ({ className }) => ( <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={className}> <path d="M3.105 2.289a.75.75 0 00-.826.95l1.414 4.949a.75.75 0 00.95.826L11.25 9.25v1.5L4.643 11.99a.75.75 0 00-.95.826l-1.414 4.949a.75.75 0 00.826.95 28.896 28.896 0 0015.293-7.154.75.75 0 000-1.118A28.897 28.897 0 003.105 2.289z" /> </svg> );
 
 
 // --- components/QueryInput.tsx ---
-// UPDATED: Major overhaul for smaller, cleaner controls and correct layout.
-const QueryInput = ({ onSearch, isSearching, isDeepResearchMode, setIsDeepResearchMode }) => {
+// UPDATED: Input bar is now slimmer on desktop with a modern black focus ring.
+const QueryInput = ({ onSearch, isSearching }) => {
   const [query, setQuery] = useState('');
-  
-  const handleSubmit = (e) => { 
-    e.preventDefault(); 
-    if (query.trim() && !isSearching) {
-      onSearch(query);
-      setQuery(''); // Clear input after submitting
-    }
-  };
+  const handleSubmit = (e) => { e.preventDefault(); if (query.trim() && !isSearching) onSearch(query); };
 
   return (
-    // UPDATED: Added z-20 to ensure it's on top of chat content.
-    <div className="fixed bottom-0 left-0 w-full p-2 bg-white/80 backdrop-blur-sm border-t border-gray-200 lg:relative lg:p-0 lg:border-none lg:bg-transparent lg:backdrop-blur-none z-20">
-        {/* UPDATED: flex-col-reverse to move toggle above input, gap-2 for spacing */}
-        <div className="max-w-3xl mx-auto flex flex-col-reverse gap-2">
-            <form onSubmit={handleSubmit} className="flex items-center gap-2">
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={isDeepResearchMode ? "Ask a deep research question..." : "Ask a simple question..."}
-                className="w-full flex-grow h-12 px-4 border border-gray-300 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-primary lg:h-14 lg:text-base lg:rounded-xl"
-                disabled={isSearching}
-              />
-              <button 
-                type="submit" 
-                disabled={isSearching || !query.trim()} 
-                // UPDATED: Button is smaller (w-10 h-10) on mobile
-                className="flex-shrink-0 bg-primary text-white rounded-full w-10 h-10 flex items-center justify-center transition-all duration-300 hover:bg-primary-hover disabled:bg-gray-400 disabled:cursor-not-allowed lg:w-auto lg:h-12 lg:rounded-lg lg:px-6 lg:gap-2">
-                {isSearching 
-                    ? <LoadingSpinner className="h-5 w-5" />
-                    : <>
-                        <SendIcon className="h-5 w-5 lg:hidden" />
-                        <span className="hidden lg:inline font-semibold">{isDeepResearchMode ? 'Research' : 'Send'}</span>
-                      </>
-                }
-              </button>
-            </form>
-            {/* UPDATED: Toggle is now tinier and part of the reversed flex column */}
-            <div className="flex items-center justify-center">
-              <label htmlFor="deep-research-toggle" className="flex items-center cursor-pointer select-none">
-                  <span className={`mr-2 text-xs font-medium ${!isDeepResearchMode ? 'text-primary' : 'text-gray-500'}`}>Simple Chat</span>
-                  <div className="relative">
-                      <input type="checkbox" id="deep-research-toggle" className="sr-only" checked={isDeepResearchMode} onChange={() => setIsDeepResearchMode(!isDeepResearchMode)} disabled={isSearching} />
-                      <div className={`block w-10 h-5 rounded-full transition-colors ${isDeepResearchMode ? 'bg-primary/80' : 'bg-gray-300'}`}></div>
-                      <div className={`toggle-dot absolute left-0.5 top-0.5 bg-white w-4 h-4 rounded-full transform ${isDeepResearchMode ? 'translate-x-5' : ''}`}></div>
-                  </div>
-                  <span className={`ml-2 text-xs font-medium ${isDeepResearchMode ? 'text-primary' : 'text-gray-500'}`}>Deep Research</span>
-              </label>
-            </div>
+    <form onSubmit={handleSubmit} className="w-full">
+      <div className="fixed bottom-0 left-0 w-full p-3 bg-white/80 backdrop-blur-sm border-t border-gray-200 lg:relative lg:p-0 lg:border-none lg:bg-transparent lg:backdrop-blur-none">
+        {/* NEW: focus-within on the parent div creates a sleek focus state for the whole component */}
+        <div className="relative rounded-full lg:rounded-xl transition-all duration-300 ring-offset-2 ring-offset-white lg:focus-within:ring-2 lg:focus-within:ring-neutral-900">
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Ask a research question..."
+            // UPDATED: Slimmer height/text, custom black focus state (ring) via parent, no default outline.
+            className="w-full h-14 p-4 pr-14 border border-gray-300 rounded-full shadow-md 
+                       focus:outline-none focus:ring-2 focus:ring-primary
+                       lg:h-16 lg:text-base lg:rounded-xl lg:pr-36 lg:focus:ring-0"
+            disabled={isSearching}
+          />
+          <button 
+            type="submit" 
+            disabled={isSearching || !query.trim()} 
+            // UPDATED: Adjusted size and styles to match the new slimmer input bar.
+            className="absolute top-1/2 -translate-y-1/2 right-2 bg-primary text-white rounded-full w-10 h-10 
+                       flex items-center justify-center transition-all duration-300 hover:bg-primary-hover
+                       disabled:bg-gray-400 disabled:cursor-not-allowed
+                       lg:w-32 lg:h-12 lg:px-4 lg:py-3 lg:rounded-lg lg:right-2 lg:gap-2 lg:text-base">
+            {isSearching 
+                ? <LoadingSpinner className="h-5 w-5" />
+                : <SearchIcon className="h-5 w-5 lg:h-6 lg:w-6" />
+            }
+            <span className="hidden lg:inline font-semibold">{isSearching ? 'Researching...' : 'Research'}</span>
+          </button>
         </div>
-    </div>
+      </div>
+    </form>
   );
 };
 
 
 // --- components/StatusBar.tsx ---
+// UPDATED: Refined styles for better visual feedback.
 const StatusBar = ({ stage, error }) => {
   const message = error ? error : STAGE_MESSAGES[stage];
   const isError = stage === ResearchStage.ERROR;
@@ -239,6 +236,7 @@ const StatusBar = ({ stage, error }) => {
 
 
 // --- components/ReportPanel.tsx ---
+// UPDATED: Markdown styles and placeholder refined.
 const MarkdownComponents = {
   h1: (props) => <h1 className="text-3xl lg:text-4xl font-bold text-neutral-900 mb-6 pb-2 border-b" {...props} />,
   h2: (props) => <h2 className="text-2xl lg:text-3xl font-bold text-neutral-800 mt-8 mb-4 pb-1 border-b" {...props} />,
@@ -256,49 +254,22 @@ const MarkdownComponents = {
   code: (props) => props.inline ? <code className="bg-gray-200 text-gray-800 rounded px-1.5 py-1 font-mono text-sm" {...props} /> : <pre className="bg-neutral-800 text-white p-4 rounded-md my-4 overflow-x-auto"><code className="font-mono" {...props} /></pre>
 };
 
-const ReportPanel = ({ conversation }) => {
-  const showPlaceholder = conversation.length === 0;
-
+const ReportPanel = ({ report, stage }) => {
+  const isStreaming = stage === ResearchStage.COMPILING;
+  const showPlaceholder = stage === ResearchStage.IDLE || stage === ResearchStage.ERROR || (stage === ResearchStage.DONE && !report);
+  
   return (
-    // UPDATED: Padding bottom increased on mobile (pb-40) to make space for the taller fixed input area.
-    <div className="h-full w-full p-4 sm:p-6 md:p-8 pb-40 lg:pb-8">
-      {conversation.map((message) => {
-        if (message.role === 'user') {
-          return (
-            <div key={message.id} className="flex justify-end my-4 animate-fade-in">
-              <div className="bg-primary text-white p-3 rounded-2xl max-w-xl shadow" style={{borderBottomRightRadius: '4px'}}>
-                <p className="text-base font-medium">{message.content}</p>
-              </div>
-            </div>
-          );
-        }
-        if (message.role === 'assistant') {
-          return (
-            <div key={message.id} className="my-4 animate-fade-in">
-              <div className={`p-4 rounded-2xl shadow-sm ${message.isError ? 'bg-red-50 border border-red-200' : 'bg-slate-50'}`} style={{borderBottomLeftRadius: '4px'}}>
-                {message.isDeepResearch && (
-                    <div className="flex items-center text-xs font-semibold text-gray-500 mb-3 border-b pb-2">
-                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-2"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" /></svg>
-                       Deep Research Report
-                    </div>
-                )}
-                <div className="prose max-w-none">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]} components={MarkdownComponents}>
-                    {message.content}
-                  </ReactMarkdown>
-                </div>
-                {message.isStreaming && <span className="animate-blink font-semibold ml-px text-neutral-600">▍</span>}
-              </div>
-            </div>
-          );
-        }
-        return null;
-      })}
-
+    <div className="h-full w-full p-6 md:p-8 pb-32 lg:pb-8">
+      <div className="prose max-w-none">
+        <ReactMarkdown remarkPlugins={[remarkGfm]} components={MarkdownComponents}>{report}</ReactMarkdown>
+      </div>
+      
+      {isStreaming && ( <div className="flex items-center text-gray-500 mt-4"> <div className="w-2.5 h-2.5 bg-primary rounded-full mr-2"></div> <span>Compiling report</span> <span className="animate-blink font-semibold ml-px">|</span> </div> )}
+      
       {showPlaceholder && (
         <div className="flex flex-col justify-center items-center h-full text-center text-gray-400">
-           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-20 h-20 text-gray-300 mb-4"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
-           <p className="text-lg font-medium text-gray-600">Your conversation will appear here</p>
+           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="w-20 h-20 text-gray-300 mb-4"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
+           <p className="text-lg font-medium text-gray-600">Your research report will appear here</p>
            <p className="text-sm">Enter a topic below to begin.</p>
         </div>
       )}
@@ -308,6 +279,7 @@ const ReportPanel = ({ conversation }) => {
 
 
 // --- components/SourcesPanel.tsx ---
+// UPDATED: Hover state on SourceCard is more polished.
 const SourceCardSkeleton = () => (
     <div className="bg-white p-4 rounded-lg border border-gray-200 mb-3 animate-pulse">
         <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
@@ -332,11 +304,11 @@ const SourcesPanel = ({ sources, stage }) => {
     const showSources = sources.length > 0;
     return (
         <div className="hidden w-full bg-slate-100/70 p-4 rounded-lg border lg:flex flex-col flex-1 min-h-0">
-          <h2 className="text-xl font-bold mb-4 text-neutral-800 flex-shrink-0">Sources (for Deep Research)</h2>
+          <h2 className="text-xl font-bold mb-4 text-neutral-800 flex-shrink-0">Sources</h2>
           <div className="overflow-y-auto pr-2 flex-1">
             {isLoading && !showSources && Array.from({ length: 3 }).map((_, i) => <SourceCardSkeleton key={i} />)}
             {showSources && sources.map((source, index) => <SourceCard key={`${source.url}-${index}`} source={source} />)}
-            {!isLoading && !showSources && ( <div className="text-center text-gray-500 flex-1 flex items-center justify-center h-full"> <p>Sources will appear here when in Deep Research mode.</p> </div> )}
+            {!isLoading && !showSources && ( <div className="text-center text-gray-500 flex-1 flex items-center justify-center h-full"> <p>Sources will appear here.</p> </div> )}
           </div>
         </div>
     );
@@ -347,74 +319,36 @@ const SourcesPanel = ({ sources, stage }) => {
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 const App = () => {
   const [stage, setStage] = useState(ResearchStage.IDLE);
-  const [conversation, setConversation] = useState([]);
+  const [report, setReport] = useState('');
   const [sources, setSources] = useState([]);
   const [error, setError] = useState(null);
-  const [isDeepResearchMode, setIsDeepResearchMode] = useState(true);
-  
-  const scrollRef = useRef(null);
   const isResearching = stage !== ResearchStage.IDLE && stage !== ResearchStage.DONE && stage !== ResearchStage.ERROR;
 
-  useEffect(() => {
-    if (scrollRef.current) {
-        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [conversation]);
-  
   const handleSearch = useCallback(async (query) => {
     if (!query.trim() || isResearching) return;
-
-    setSources([]); setError(null); setStage(ResearchStage.IDLE);
-
-    const userMessage = { id: Date.now(), role: 'user', content: query };
-    setConversation(prev => [...prev, userMessage]);
-
-    const assistantMessageId = Date.now() + 1;
-    const assistantMessage = { id: assistantMessageId, role: 'assistant', content: '', isDeepResearch: isDeepResearchMode, isStreaming: true };
-    setConversation(prev => [...prev, assistantMessage]);
-
+    setStage(ResearchStage.IDLE); setReport(''); setSources([]); setError(null);
     try {
-        let stream;
-        if (isDeepResearchMode) {
-            setStage(ResearchStage.OPTIMIZING);
-            const enhancedQuery = await translateAndEnhanceQuery(query, ai);
-            setStage(ResearchStage.SEARCHING);
-            const fetchedSources = await fetchSources(enhancedQuery, ai);
-            if (fetchedSources.length === 0) throw new Error("Could not find relevant sources. Please try a different query.");
-            setSources(fetchedSources);
-            setStage(ResearchStage.ANALYZING);
-            const analyzedSources = await analyzeSources(fetchedSources, ai);
-            setSources(analyzedSources);
-            setStage(ResearchStage.COMPILING);
-            stream = await generateReportStream(query, analyzedSources, ai);
-        } else {
-            setStage(ResearchStage.COMPILING);
-            stream = await generateSimpleResponseStream(query, ai);
-        }
-
-        let fullResponse = '';
-        for await (const chunk of stream) {
-            fullResponse += chunk.text;
-            setConversation(prev => prev.map(msg => 
-                msg.id === assistantMessageId ? { ...msg, content: fullResponse } : msg
-            ));
-        }
-        
-        setConversation(prev => prev.map(msg => 
-            msg.id === assistantMessageId ? { ...msg, isStreaming: false } : msg
-        ));
-        setStage(ResearchStage.DONE);
-
+      setStage(ResearchStage.OPTIMIZING);
+      const enhancedQuery = await translateAndEnhanceQuery(query, ai);
+      setStage(ResearchStage.SEARCHING);
+      const fetchedSources = await fetchSources(enhancedQuery, ai);
+      if (fetchedSources.length === 0) throw new Error("Could not find relevant sources. Please try a different query.");
+      setSources(fetchedSources);
+      setStage(ResearchStage.ANALYZING);
+      const analyzedSources = await analyzeSources(fetchedSources, ai);
+      setSources(analyzedSources);
+      setStage(ResearchStage.COMPILING);
+      const stream = await generateReportStream(query, analyzedSources, ai);
+      let fullReport = '';
+      for await (const chunk of stream) { fullReport += chunk.text; setReport(fullReport); }
+      setStage(ResearchStage.DONE);
     } catch (e) {
       console.error(e);
       let errorMessage = "An unknown error occurred.";
       if (e.message) { try { const errorObj = JSON.parse(e.message); errorMessage = errorObj?.error?.message || e.message; } catch { errorMessage = e.message; } }
       setError(errorMessage); setStage(ResearchStage.ERROR);
-      setConversation(prev => prev.map(msg => 
-            msg.id === assistantMessageId ? { ...msg, content: `Error: ${errorMessage}`, isError: true, isStreaming: false } : msg
-        ));
     }
-  }, [isResearching, isDeepResearchMode]);
+  }, [isResearching]);
 
   return (
     <div className="flex flex-col lg:flex-row h-screen bg-white text-neutral-800">
@@ -422,8 +356,8 @@ const App = () => {
        <div className="w-full lg:w-1/2 lg:max-w-2xl lg:h-full flex flex-col lg:border-r order-last lg:order-first">
         <div className="p-6 lg:p-8 flex flex-col gap-6 flex-1 min-h-0">
           <header className="hidden lg:block w-full text-left">
-            <h1 className="text-3xl font-bold text-neutral-900">AI Research Agent</h1>
-            <p className="mt-2 text-md text-gray-600">Your partner for quick chats and in-depth analysis.</p>
+            <h1 className="text-3xl font-bold text-neutral-900">AI Deep Research Agent</h1>
+            <p className="mt-2 text-md text-gray-600">Your intelligent partner for in-depth analysis and reporting.</p>
           </header>
           <main className="w-full flex-col gap-4 flex-1 min-h-0 hidden lg:flex">
             <StatusBar stage={stage} error={error} />
@@ -431,20 +365,16 @@ const App = () => {
           </main>
         </div>
         <div className="w-full mt-auto p-4 lg:p-8 lg:pt-0">
-            <QueryInput 
-                onSearch={handleSearch} 
-                isSearching={isResearching} 
-                isDeepResearchMode={isDeepResearchMode}
-                setIsDeepResearchMode={setIsDeepResearchMode}
-            />
+            <QueryInput onSearch={handleSearch} isSearching={isResearching} />
         </div>
       </div>
 
-      <div ref={scrollRef} className="w-full lg:flex-1 h-full overflow-y-auto order-first lg:order-last">
+      <div className="w-full lg:flex-1 h-full overflow-y-auto order-first lg:order-last">
+         {/* UPDATED: Mobile header is now sticky for a better scrolling experience */}
          <div className="p-4 sm:p-6 lg:hidden sticky top-0 bg-white/90 backdrop-blur-sm z-10 border-b">
-            <h1 className="text-xl font-semibold text-neutral-800 text-center">AI Agent</h1>
+            <h1 className="text-xl font-semibold text-neutral-800 text-center">Research Report</h1>
          </div>
-         <ReportPanel conversation={conversation} />
+         <ReportPanel report={report} stage={stage} />
       </div>
 
     </div>
