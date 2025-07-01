@@ -5,72 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Deep Research Agent</title>
     
-    <!-- NEW: Using the 'Inter' font for a more modern and professional UI -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Tailwind CSS with custom theme -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-      // UPDATED: Added a neutral palette for refined black/gray usage.
       tailwind.config = {
         theme: {
           extend: {
             colors: {
-              primary: {
-                DEFAULT: '#4A90E2',
-                hover: '#357ABD',
-              },
-              neutral: {
-                50: '#F9FAFB',
-                100: '#F3F4F6',
-                200: '#E5E7EB',
-                300: '#D1D5DB',
-                400: '#9CA3AF',
-                500: '#6B7280',
-                600: '#4B5563',
-                700: '#374151',
-                800: '#1F2937',
-                900: '#111827',
-              }
+              primary: { DEFAULT: '#4A90E2', hover: '#357ABD' },
+              neutral: { 50: '#F9FAFB', 100: '#F3F4F6', 200: '#E5E7EB', 300: '#D1D5DB', 400: '#9CA3AF', 500: '#6B7280', 600: '#4B5563', 700: '#374151', 800: '#1F2937', 900: '#111827' }
             },
-             // UPDATED: Adjusted prose styles slightly for better readability
-            typography: (theme) => ({
-                DEFAULT: {
-                    css: {
-                        '--tw-prose-body': theme('colors.neutral.800'),
-                        '--tw-prose-headings': theme('colors.neutral.900'),
-                        '--tw-prose-lead': theme('colors.neutral.700'),
-                        '--tw-prose-links': theme('colors.primary.DEFAULT'),
-                        '--tw-prose-bold': theme('colors.neutral.900'),
-                        '--tw-prose-counters': theme('colors.neutral.500'),
-                        '--tw-prose-bullets': theme('colors.neutral.300'),
-                        '--tw-prose-hr': theme('colors.neutral.200'),
-                        '--tw-prose-quotes': theme('colors.neutral.900'),
-                        '--tw-prose-quote-borders': theme('colors.primary.DEFAULT'),
-                        '--tw-prose-captions': theme('colors.neutral.500'),
-                        '--tw-prose-code': theme('colors.neutral.900'),
-                        '--tw-prose-pre-code': theme('colors.neutral.200'),
-                        '--tw-prose-pre-bg': theme('colors.neutral.800'),
-                        '--tw-prose-th-borders': theme('colors.neutral.300'),
-                        '--tw-prose-td-borders': theme('colors.neutral.200'),
-                        'blockquote p:first-of-type::before': { content: '""' },
-                        'blockquote p:last-of-type::after': { content: '""' },
-                    },
+            keyframes: {
+                 // NEW: Shimmer animation for skeleton loaders
+                shimmer: {
+                    '100%': { transform: 'translateX(100%)' },
                 },
-            }),
+            },
           }
         }
       }
     </script>
     
-    <!-- React & Babel for in-browser JSX transpilation -->
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
-    <!-- Import Map for ES Modules used in the script -->
     <script type="importmap">
 {
   "imports": {
@@ -85,86 +47,34 @@
 </script>
     
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            overflow: hidden; 
-        }
-        
-        /* Custom scrollbar for a cleaner look */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #c1c1c1;
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #a8a8a8;
-        }
-
-        /* Fade-in animation for loaded content */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in {
-            animation: fadeIn 0.5s ease-out forwards;
-        }
-        
-        /* Blinking cursor animation for the report compilation status */
-        @keyframes blink {
-            50% { opacity: 0; }
-        }
-        .animate-blink {
-            animation: blink 1s step-start infinite;
-        }
+        body { font-family: 'Inter', sans-serif; overflow: hidden; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        @keyframes blink { 50% { opacity: 0; } }
+        .animate-blink { animation: blink 1s step-start infinite; }
     </style>
 </head>
 <body class="bg-white">
     <div id="root"></div>
     <script type="text/babel" data-type="module">
-// --- Polyfill for process.env ---
+// --- Polyfill, Dependencies, types.ts ---
 const process = { env: { API_KEY: "AIzaSyDgEdgBX2VWf2PO4X29haQzISTDTemzuW4" } };
-
-// --- Dependencies ---
-import React, { useState, useCallback, useEffect } from 'react'; // Added useEffect for copy button feedback
+import React, { useState, useCallback, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import { GoogleGenAI } from "@google/genai";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-
-// --- types.ts ---
-const ResearchStage = {
-  IDLE: 'IDLE',
-  OPTIMIZING: 'OPTIMIZING',
-  SEARCHING: 'SEARCHING',
-  ANALYZING: 'ANALYZING',
-  COMPILING: 'COMPILING',
-  DONE: 'DONE',
-  ERROR: 'ERROR',
-};
-
-
-// --- constants.ts ---
-const STAGE_MESSAGES = {
-  [ResearchStage.IDLE]: 'Ready for research. Enter a topic or question.',
-  [ResearchStage.OPTIMIZING]: 'Optimizing search query...',
-  [ResearchStage.SEARCHING]: 'Gathering relevant sources...',
-  [ResearchStage.ANALYZING]: 'Performing deep analysis of sources...',
-  [ResearchStage.COMPILING]: 'Synthesizing analysis and compiling report...',
-  [ResearchStage.DONE]: 'Research complete. The report is ready.',
-  [ResearchStage.ERROR]: 'An error occurred. Please try again.',
-};
+const ResearchStage = { IDLE: 'IDLE', OPTIMIZING: 'OPTIMIZING', SEARCHING: 'SEARCHING', ANALYZING: 'ANALYZING', COMPILING: 'COMPILING', DONE: 'DONE', ERROR: 'ERROR' };
 
 // --- services/geminiService.ts ---
-// UPDATED: Model changed to gemini-2.5-flash-preview-04-17
 const MODEL_NAME = 'gemini-2.5-flash-preview-04-17';
 
+// Unchanged service functions (translateAndEnhanceQuery, analyzeSources)
 const translateAndEnhanceQuery = async (query, ai) => {
     const prompt = `You are an expert search query enhancer. Your task is to take a user's query, which might be in any language, and convert it into a highly effective, detailed English search query suitable for academic and web research. **User's Original Query:** "${query}" **Instructions:** 1. First, identify the language of the original query. 2. Translate the query into English. 3. Enhance the translated English query by adding relevant keywords, rephrasing it for clarity, and making it more specific to yield the best possible search results. 4. Return ONLY a single JSON object with one key: "enhanced_query". Do not include any other text, markdown, or explanations. **Example:** Original Query: "एलएलएम के नैतिक प्रभाव क्या हैं?" Your Output: { "enhanced_query": "ethical implications of large language models (LLMs) in society and AI development" } Now, provide the JSON output for the user's original query provided above.`;
     try {
@@ -174,7 +84,6 @@ const translateAndEnhanceQuery = async (query, ai) => {
         return parsed.enhanced_query || query;
     } catch (error) { console.error("Error enhancing query:", error); return query; }
 };
-
 const analyzeSources = async (sources, ai) => {
     const sourceContentForAnalysis = sources.map(s => ({ url: s.url, content: s.content.substring(0, 4000) }));
     const prompt = `You are an expert research analyst. Your task is to perform a deep analysis of the provided web content. For each source, read the content and extract the key arguments, data, and conclusions. **Input Data (JSON array of sources):** ${JSON.stringify(sourceContentForAnalysis)} **Instructions:** 1. Analyze each source's content individually. 2. Produce a concise, insightful analysis for each, summarizing the main points and key takeaways. 3. Return your output as a single, valid JSON array of objects. Each object in the array must have two keys: "url" (the original URL of the source) and "analysis" (your summary). 4. Do not include any other text, markdown, or explanation outside of the JSON array. Your response must be only the JSON. Now, provide the JSON output for the input data provided above.`;
@@ -187,201 +96,237 @@ const analyzeSources = async (sources, ai) => {
     } catch (error) { console.error("Error analyzing sources:", error); return sources.map(s => ({ ...s, analysis: "AI analysis failed. Using original content snippet." })); }
 };
 
+// UPDATED: New, more detailed instructions for the report generation.
 const generateReportStream = async (query, sources, ai) => {
-    const sourcesText = sources.filter(s => s.analysis && !s.analysis.includes("failed")).map((s, i) => `Source [${i+1}] (${s.title}):\nURL: ${s.url}\nAI-Generated Analysis: ${s.analysis}`).join('\n\n');
-    const prompt = `You are a Deep Research Agent, an expert analyst. Your task is to synthesize the provided **AI-generated analyses of web sources** into a comprehensive, well-structured, and human-like research report. **Original Research Question (from the user):** "${query}" **Provided Source Analyses:**\n---\n${sourcesText}\n---\n**Instructions:** 1. **Synthesize from Analysis:** Your primary material is the AI-generated analysis for each source. Weave these insights together into a coherent narrative that directly answers the **original research question** with deep insight. 2. **Human-like Tone:** Write in a clear, professional, and engaging style. 3. **Structure and Formatting:** Use advanced Markdown for clear structure (H1, H2, H3, lists, tables, blockquotes). 4. **Cite Your Sources:** When you use information, cite it parenthetically, like \`(Source [1])\`. All claims must be attributable to the provided source analyses. 5. **Provide a Conclusion:** End with a "Conclusion" section summarizing the key takeaways. 6. **Final Section - Sources:** At the very end, create a H2 section titled "Sources" and list all used sources with their titles and URLs as a Markdown list. Example: \`* [Source Title](URL)\`. Begin the report now.`;
+    const sourcesText = sources
+        .filter(s => s.analysis && !s.analysis.includes("failed"))
+        .map((s, i) => `Source [${i+1}] (${s.title}):\nURL: ${s.url}\nAI-Generated Analysis: ${s.analysis}`)
+        .join('\n\n');
+
+    const prompt = `
+You are Deep Research Agent, an advanced AI analyst trained to generate professional, academic-standard research reports. Your goal is to transform the AI-generated source analyses into a comprehensive, credible, and polished report that closely resembles a high-level academic or journalistic investigation.
+
+
+---
+
+🎯 Original Research Question (from the user):
+
+${query}
+
+
+---
+
+📄 Provided Source Analyses:
+
+${sourcesText}
+
+
+---
+
+💼 Instructions:
+
+1️⃣ Synthesize from Analysis
+
+Your primary material is the provided AI-generated source analyses.
+
+Weave these insights together into a single, coherent narrative that directly addresses the original research question.
+
+Go beyond simply summarizing — analyze, compare, and evaluate different claims or data points to build a logical argument.
+
+
+
+---
+
+2️⃣ Academic and Professional Tone
+
+Write with a formal, objective, and authoritative style, similar to that used in peer-reviewed journals or investigative reports.
+
+Avoid casual or conversational phrasing.
+
+Maintain neutrality; avoid emotional or subjective language.
+
+
+
+---
+
+3️⃣ Advanced Structure and Formatting
+
+Use advanced Markdown for clarity and hierarchy:
+
+# for Title
+
+## for major sections
+
+### for sub-sections
+
+
+Include these main sections:
+
+# Title: A clear, academic-style title summarizing the topic.
+
+## Abstract: A concise summary of the report’s purpose, key findings, and conclusion.
+
+## Introduction: Context and background to the research question.
+
+## Analysis / Key Findings: Detailed synthesis and evaluation of source insights.
+
+## Conclusion: Summarize your overall findings clearly.
+
+## References: List all sources in proper Markdown link format (see instructions below).
+
+
+
+
+---
+
+4️⃣ Citations
+
+When referencing or using information from a specific source, cite it inline parenthetically, like (Source [1]).
+
+Ensure every claim can be traced to at least one source from the provided analyses.
+
+
+
+---
+
+5️⃣ Tables and Lists (If Useful)
+
+When comparing conflicting points or summarizing multiple claims, consider using:
+
+Tables with headers
+
+Bullet or numbered lists
+
+Blockquotes for direct source excerpts
+
+
+
+
+---
+
+6️⃣ Final References Section
+
+At the end, create a ## References section.
+
+List all sources used, in Markdown list format, example:
+
+
+* [Source Title](URL)
+
+Each source should include its title and direct link.
+
+
+
+---
+
+7️⃣ Expected Output Style
+
+Report should closely resemble an academic research article or an investigative journalistic piece, similar to professional publications.
+
+Emphasize logical flow, clarity, and evidence-based reasoning
+    `;
+
     try {
-        return await ai.models.generateContentStream({ model: MODEL_NAME, contents: prompt, config: { temperature: 0.6 } });
-    } catch (error) { console.error("Error generating report:", error); throw new Error(JSON.stringify(error) || "Failed to generate the research report."); }
+        return await ai.models.generateContentStream({ model: MODEL_NAME, contents: prompt, config: { temperature: 0.5 } });
+    } catch (error) {
+        console.error("Error generating report:", error);
+        throw new Error(JSON.stringify(error) || "Failed to generate the research report.");
+    }
 };
 
-
-// --- services/searchService.ts ---
-// UPDATED: Model changed to gemini-2.5-flash-preview-04-17 for Google Search calls
-const TAVILY_API_KEY = "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";
-const BRAVE_API_KEY = "BSA2_RrvzlC4vU0-05O6FWmpSMBR3_v";
-const fetchSourcesFromTavily = async (query) => { try { const response = await fetch('https://api.tavily.com/search', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ api_key: TAVILY_API_KEY, query: query, search_depth: 'advanced', max_results: 5, }), }); if (!response.ok) throw new Error(`Tavily API error: ${response.statusText}`); const data = await response.json(); return data.results.map((r) => ({ title: r.title, url: r.url, content: r.content })); } catch (e) { console.error("Error fetching from Tavily:", e); return []; } };
-const fetchSourcesFromBrave = async (query) => { try { const response = await fetch(`https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}`, { headers: { 'Accept': 'application/json', 'X-Subscription-Token': BRAVE_API_KEY }, }); if (!response.ok) throw new Error(`Brave API error: ${response.statusText}`); const data = await response.json(); return (data.web?.results || []).map((r) => ({ title: r.title, url: r.url, content: r.description })); } catch (e) { console.error("Error fetching from Brave:", e); return []; } };
-const fetchSourcesFromGoogle = async (query, ai) => { try { const result = await ai.models.generateContent({ model: MODEL_NAME, contents: `Using Google Search, find relevant sources and provide a brief overview for the topic: ${query}`, config: { tools: [{googleSearch: {}}] }, }); let sources = []; if (result.candidates?.[0]?.groundingMetadata?.groundingChunks) { sources = result.candidates[0].groundingMetadata.groundingChunks.map((c) => ({ title: c.web?.title, url: c.web?.uri, content: c.web?.snippet })).filter(s => s.url && s.title && s.content); } return sources; } catch (e) { console.error("Error fetching from Google Search via Gemini:", e); throw new Error(JSON.stringify(e) || "Failed to fetch from Google Search"); } };
-const fetchSources = async (query, ai) => { try { const [googleResults, tavilyResults, braveResults] = await Promise.all([ fetchSourcesFromGoogle(query, ai), fetchSourcesFromTavily(query), fetchSourcesFromBrave(query) ]); const allResults = [...googleResults, ...tavilyResults, ...braveResults]; return allResults.filter((v, i, a) => a.findIndex(t => (t.url === v.url)) === i); } catch (error) { console.error("Error fetching sources:", error); throw error; } };
-
+// --- services/searchService.ts --- (Shortened for brevity, no logical change)
+const TAVILY_API_KEY = "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"; const BRAVE_API_KEY = "BSA2_RrvzlC4vU0-05O6FWmpSMBR3_v"; const fetchSourcesFromTavily = async (query) => { try { const response = await fetch('https://api.tavily.com/search', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ api_key: TAVILY_API_KEY, query: query, search_depth: 'advanced', max_results: 5, }), }); if (!response.ok) throw new Error(`Tavily API error: ${response.statusText}`); const data = await response.json(); return data.results.map((r) => ({ title: r.title, url: r.url, content: r.content })); } catch (e) { console.error("Error fetching from Tavily:", e); return []; } }; const fetchSourcesFromBrave = async (query) => { try { const response = await fetch(`https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}`, { headers: { 'Accept': 'application/json', 'X-Subscription-Token': BRAVE_API_KEY }, }); if (!response.ok) throw new Error(`Brave API error: ${response.statusText}`); const data = await response.json(); return (data.web?.results || []).map((r) => ({ title: r.title, url: r.url, content: r.description })); } catch (e) { console.error("Error fetching from Brave:", e); return []; } }; const fetchSourcesFromGoogle = async (query, ai) => { try { const result = await ai.models.generateContent({ model: MODEL_NAME, contents: `Using Google Search, find relevant sources and provide a brief overview for the topic: ${query}`, config: { tools: [{googleSearch: {}}] }, }); let sources = []; if (result.candidates?.[0]?.groundingMetadata?.groundingChunks) { sources = result.candidates[0].groundingMetadata.groundingChunks.map((c) => ({ title: c.web?.title, url: c.web?.uri, content: c.web?.snippet })).filter(s => s.url && s.title && s.content); } return sources; } catch (e) { console.error("Error fetching from Google Search via Gemini:", e); throw new Error(JSON.stringify(e) || "Failed to fetch from Google Search"); } }; const fetchSources = async (query, ai) => { try { const [googleResults, tavilyResults, braveResults] = await Promise.all([ fetchSourcesFromGoogle(query, ai), fetchSourcesFromTavily(query), fetchSourcesFromBrave(query) ]); const allResults = [...googleResults, ...tavilyResults, ...braveResults]; return allResults.filter((v, i, a) => a.findIndex(t => (t.url === v.url)) === i); } catch (error) { console.error("Error fetching sources:", error); throw error; } };
 
 // --- components/icons.tsx ---
-// NEW: Added Copy icon
 const SearchIcon = ({ className }) => ( <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}> <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /> </svg> );
 const LoadingSpinner = ({ className }) => ( <svg className={`animate-spin ${className}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"> <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle> <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path> </svg> );
-const CopyIcon = ({ className }) => ( <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className={className}> <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25H9.75m6-4H9.75m6-4H9.75m4.5 10.5h2.25a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H15M12 18.75l3-3m-3 0l-3 3m-2.25-4.5H5.625c-.621 0-1.125-.504-1.125-1.125V3.65937c0-.621.504-1.125 1.125-1.125H17.25c.621 0 1.125.504 1.125 1.125V10.5m-10.5 6L9.75 17.25c-.621 0-1.125-.504-1.125-1.125V3.65937c0-.621.504-1.125 1.125-1.125H17.25c.621 0 1.125.504 1.125 1.125V10.5m-10.5 6L9.75 17.25" /> </svg> );
-const CheckIcon = ({ className }) => ( <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className={className}> <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /> </svg> );
-
+const CopyIcon = ({ className }) => ( <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className={className}> <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25H9.75m6-4H9.75m6-4H9.75m4.5 10.5h2.25a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H15M12 18.75l3-3m-3 0l-3 3m-2.25-4.5H5.625c-.621 0-1.125-.504-1.125-1.125V3.65937c0-.621.504-1.125 1.125-1.125H17.25c.621 0 1.125.504 1.125 1.125V10.5m-10.5 6L9.75 17.25c-.621 0-1.125-.504-1.125-1.125V3.65937c0-.621.504-1.125 1.125-1.125H17.25c.621 0 1.125.504 1.125 1.125V10.5m-10.5 6L9.75 17.25" /> </svg> );
+const CheckIcon = ({ className }) => ( <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className={className}> <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /> </svg> );
 
 // --- components/QueryInput.tsx ---
-// UPDATED: Input bar is now slimmer on desktop with a modern black focus ring.
 const QueryInput = ({ onSearch, isSearching }) => {
   const [query, setQuery] = useState('');
   const handleSubmit = (e) => { e.preventDefault(); if (query.trim() && !isSearching) onSearch(query); };
-
-  return (
-    <form onSubmit={handleSubmit} className="w-full">
-      {/* This div handles positioning: fixed on mobile, relative on desktop */}
-      <div className="fixed bottom-0 left-0 w-full p-3 bg-white/80 backdrop-blur-sm border-t border-gray-200 lg:relative lg:p-0 lg:border-none lg:bg-transparent lg:backdrop-blur-none z-20"> {/* Increased z-index */}
-        {/* NEW: focus-within on the parent div creates a sleek focus state for the whole component */}
-        <div className="relative rounded-full lg:rounded-xl transition-all duration-300 ring-offset-2 ring-offset-white lg:focus-within:ring-2 lg:focus-within:ring-neutral-900">
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Ask a research question..."
-            // UPDATED: Slimmer height/text, custom black focus state (ring) via parent, no default outline.
-            className="w-full h-14 p-4 pr-14 border border-gray-300 rounded-full shadow-md 
-                       focus:outline-none focus:ring-2 focus:ring-primary
-                       lg:h-16 lg:text-base lg:rounded-xl lg:pr-36 lg:shadow-sm lg:focus:ring-0"
-            disabled={isSearching}
-          />
-          <button 
-            type="submit" 
-            disabled={isSearching || !query.trim()} 
-            // UPDATED: Adjusted size and styles to match the new slimmer input bar.
-            className="absolute top-1/2 -translate-y-1/2 right-2 bg-primary text-white rounded-full w-10 h-10 
-                       flex items-center justify-center transition-all duration-300 hover:bg-primary-hover
-                       disabled:bg-gray-400 disabled:cursor-not-allowed
-                       lg:w-32 lg:h-12 lg:px-4 lg:py-3 lg:rounded-lg lg:right-2 lg:gap-2 lg:text-base">
-            {isSearching 
-                ? <LoadingSpinner className="h-5 w-5" />
-                : <SearchIcon className="h-5 w-5 lg:h-6 lg:w-6" />
-            }
-            <span className="hidden lg:inline font-semibold">{isSearching ? 'Researching...' : 'Research'}</span>
-          </button>
-        </div>
-      </div>
-    </form>
-  );
+  return ( <form onSubmit={handleSubmit} className="w-full"> <div className="fixed bottom-0 left-0 w-full p-3 bg-white/80 backdrop-blur-sm border-t border-gray-200 lg:relative lg:p-0 lg:border-none lg:bg-transparent lg:backdrop-blur-none z-20"> <div className="relative rounded-full lg:rounded-xl transition-all duration-300 ring-offset-2 ring-offset-white lg:focus-within:ring-2 lg:focus-within:ring-neutral-900"> <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Ask a research question..." className="w-full h-14 p-4 pr-14 border border-gray-300 rounded-full shadow-md focus:outline-none focus:ring-2 focus:ring-primary lg:h-16 lg:text-base lg:rounded-xl lg:pr-36 lg:shadow-sm lg:focus:ring-0" disabled={isSearching} /> <button type="submit" disabled={isSearching || !query.trim()} className="absolute top-1/2 -translate-y-1/2 right-2 bg-primary text-white rounded-full w-10 h-10 flex items-center justify-center transition-all duration-300 hover:bg-primary-hover disabled:bg-gray-400 disabled:cursor-not-allowed lg:w-32 lg:h-12 lg:px-4 lg:py-3 lg:rounded-lg lg:right-2 lg:gap-2 lg:text-base"> {isSearching ? <LoadingSpinner className="h-5 w-5" /> : <SearchIcon className="h-5 w-5 lg:h-6 lg:w-6" />} <span className="hidden lg:inline font-semibold">{isSearching ? 'Researching...' : 'Research'}</span> </button> </div> </div> </form> );
 };
-
 
 // --- components/StatusBar.tsx ---
-// UPDATED: Refined styles for better visual feedback.
+// NEW: Advanced, multi-stage progress bar replaces simple status.
+const STAGES_CONFIG = [
+  { id: ResearchStage.OPTIMIZING, label: 'Optimizing' },
+  { id: ResearchStage.SEARCHING, label: 'Searching' },
+  { id: ResearchStage.ANALYZING, label: 'Analyzing' },
+  { id: ResearchStage.COMPILING, label: 'Compiling' },
+];
+
 const StatusBar = ({ stage, error }) => {
-  const message = error ? error : STAGE_MESSAGES[stage];
-  const isError = stage === ResearchStage.ERROR;
-  const isDone = stage === ResearchStage.DONE;
-  const isProcessing = !isError && !isDone && stage !== ResearchStage.IDLE;
-  
-  const showSpinner = isProcessing;
-  const baseClasses = 'flex items-center justify-center p-3 rounded-lg w-full text-center transition-all duration-300';
-  const colorClasses = isError ? 'bg-red-100 text-red-800' : isDone ? 'bg-green-100 text-green-800' : isProcessing ? 'bg-primary/10 text-primary animate-pulse' : 'bg-slate-100 text-slate-600';
+    const isProcessing = STAGES_CONFIG.some(s => s.id === stage);
+    const isDone = stage === ResearchStage.DONE;
+    const isError = stage === ResearchStage.ERROR;
 
-  return (
-    <div className={`${baseClasses} ${colorClasses}`}>
-      {showSpinner && <LoadingSpinner className="h-5 w-5 mr-3" />}
-      <p className="text-sm font-semibold">{message}</p>
-    </div>
-  );
+    if (stage === ResearchStage.IDLE) {
+        return <div className="p-4 rounded-lg bg-neutral-100 text-neutral-600 text-center text-sm font-semibold">Ready for research.</div>;
+    }
+    
+    if (isError) {
+        return <div className="p-4 rounded-lg bg-red-100 text-red-800 text-center text-sm font-semibold">{error || "An unknown error occurred."}</div>;
+    }
+    
+    if (isDone) {
+        return <div className="p-4 rounded-lg bg-green-100 text-green-800 text-center text-sm font-semibold">Research complete. The report is ready.</div>;
+    }
+
+    const currentStageIndex = STAGES_CONFIG.findIndex(s => s.id === stage);
+    const progressPercentage = ((currentStageIndex + 1) / STAGES_CONFIG.length) * 100;
+
+    return (
+        <div className="w-full p-4 rounded-lg bg-neutral-100 border border-neutral-200">
+            <div className="w-full bg-neutral-200 rounded-full h-2.5 mb-3">
+                <div className="bg-primary h-2.5 rounded-full transition-all duration-500" style={{ width: `${progressPercentage}%` }}></div>
+            </div>
+            <div className="flex justify-between text-xs font-semibold text-neutral-500">
+                {STAGES_CONFIG.map((s, index) => (
+                    <div key={s.id} className={`flex items-center gap-1.5 ${stage === s.id ? 'text-primary' : ''}`}>
+                        {stage === s.id && <LoadingSpinner className="h-3 w-3" />}
+                        <span>{s.label}</span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
 };
 
 
-// --- components/ReportPanel.tsx ---
-// UPDATED: Markdown styles and placeholder refined. Added Copy button logic.
-const MarkdownComponents = {
-  h1: (props) => <h1 className="text-3xl lg:text-4xl font-bold text-neutral-900 mb-6 pb-2 border-b border-neutral-200" {...props} />,
-  h2: (props) => <h2 className="text-2xl lg:text-3xl font-bold text-neutral-800 mt-8 mb-4 pb-1 border-b border-neutral-200" {...props} />,
-  h3: (props) => <h3 className="text-xl lg:text-2xl font-semibold text-neutral-800 mt-6 mb-3" {...props} />,
-  p: (props) => <p className="mb-5 leading-relaxed text-base" {...props} />,
-  ul: (props) => <ul className="list-disc list-inside mb-5 pl-4 space-y-2" {...props} />,
-  ol: (props) => <ol className="list-decimal list-inside mb-5 pl-4 space-y-2" {...props} />,
-  li: (props) => <li className="mb-2" {...props} />,
-  a: (props) => <a className="text-primary hover:underline" target="_blank" rel="noopener noreferrer" {...props} />,
-  blockquote: (props) => <blockquote className="border-l-4 border-primary bg-neutral-50 p-4 my-6 italic text-gray-700" {...props} />,
-  table: (props) => <div className="overflow-x-auto my-6"><table className="table-auto w-full border-collapse border border-neutral-300" {...props} /></div>,
-  thead: (props) => <thead className="bg-neutral-100" {...props} />,
-  th: (props) => <th className="border border-neutral-300 px-4 py-2 text-left font-semibold text-neutral-800" {...props} />,
-  td: (props) => <td className="border border-neutral-200 px-4 py-2 text-neutral-700" {...props} />,
-  code: (props) => props.inline ? <code className="bg-neutral-200 text-neutral-800 rounded px-1.5 py-1 font-mono text-sm" {...props} /> : <pre className="bg-neutral-800 text-neutral-100 p-4 rounded-md my-4 overflow-x-auto"><code className="font-mono" {...props} /></pre>
-};
-
+// --- components/ReportPanel.tsx --- (Unchanged from previous version)
 const ReportPanel = ({ report, stage }) => {
   const [copied, setCopied] = useState(false);
   const isStreaming = stage === ResearchStage.COMPILING;
   const isDone = stage === ResearchStage.DONE;
   const showPlaceholder = stage === ResearchStage.IDLE || stage === ResearchStage.ERROR || (isDone && !report);
   const showCopyButton = isDone && report;
-
-  const handleCopy = useCallback(async () => {
-    if (!report || copied) return;
-    try {
-      await navigator.clipboard.writeText(report);
-      setCopied(true);
-    } catch (err) {
-      console.error("Failed to copy report:", err);
-      // Optionally, provide error feedback to the user
-    }
-  }, [report, copied]);
-
-  useEffect(() => {
-    if (copied) {
-      const timer = setTimeout(() => {
-        setCopied(false);
-      }, 3000); // Show "Copied!" for 3 seconds
-      return () => clearTimeout(timer);
-    }
-  }, [copied]);
-  
-  return (
-    // UPDATED: Added significant padding-bottom to prevent the fixed mobile input from overlapping content.
-    // Added relative positioning for the copy button if needed later, currently static placement.
-    <div className="relative h-full w-full p-6 md:p-8 pb-32 lg:pb-8">
-      {showCopyButton && (
-        <div className="flex justify-end mb-4"> {/* Container for the copy button */}
-            <button 
-                onClick={handleCopy}
-                disabled={copied}
-                className="flex items-center gap-1 px-4 py-2 border border-gray-300 rounded-lg text-sm font-semibold 
-                           bg-white text-neutral-700 hover:bg-gray-50 transition-colors duration-200 
-                           disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-white"
-            >
-                {copied ? <CheckIcon className="h-4 w-4 text-green-600" /> : <CopyIcon className="h-4 w-4 text-neutral-600" />}
-                {copied ? 'Copied!' : 'Copy Report'}
-            </button>
-        </div>
-      )}
-
-      <div className="prose max-w-none">
-        <ReactMarkdown remarkPlugins={[remarkGfm]} components={MarkdownComponents}>{report}</ReactMarkdown>
-      </div>
-      
-      {isStreaming && ( <div className="flex items-center text-gray-500 mt-4"> <div className="w-2.5 h-2.5 bg-primary rounded-full mr-2"></div> <span>Compiling report</span> <span className="animate-blink font-semibold ml-px">|</span> </div> )}
-      
-      {showPlaceholder && (
-        <div className="flex flex-col justify-center items-center h-full text-center text-gray-400">
-           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="w-20 h-20 text-gray-300 mb-4"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
-           <p className="text-lg font-medium text-gray-600">Your research report will appear here</p>
-           <p className="text-sm">Enter a topic below to begin.</p>
-        </div>
-      )}
-    </div>
-  );
+  const handleCopy = useCallback(async () => { if (!report || copied) return; try { await navigator.clipboard.writeText(report); setCopied(true); } catch (err) { console.error("Failed to copy report:", err); } }, [report, copied]);
+  useEffect(() => { if (copied) { const timer = setTimeout(() => { setCopied(false); }, 3000); return () => clearTimeout(timer); } }, [copied]);
+  const MarkdownComponents = { h1: (props) => <h1 className="text-3xl lg:text-4xl font-bold text-neutral-900 mb-6 pb-2 border-b border-neutral-200" {...props} />, h2: (props) => <h2 className="text-2xl lg:text-3xl font-bold text-neutral-800 mt-8 mb-4 pb-1 border-b border-neutral-200" {...props} />, h3: (props) => <h3 className="text-xl lg:text-2xl font-semibold text-neutral-800 mt-6 mb-3" {...props} />, p: (props) => <p className="mb-5 leading-relaxed text-base" {...props} />, ul: (props) => <ul className="list-disc list-inside mb-5 pl-4 space-y-2" {...props} />, ol: (props) => <ol className="list-decimal list-inside mb-5 pl-4 space-y-2" {...props} />, li: (props) => <li className="mb-2" {...props} />, a: (props) => <a className="text-primary hover:underline" target="_blank" rel="noopener noreferrer" {...props} />, blockquote: (props) => <blockquote className="border-l-4 border-primary bg-neutral-50 p-4 my-6 italic text-gray-700" {...props} />, table: (props) => <div className="overflow-x-auto my-6"><table className="table-auto w-full border-collapse border border-neutral-300" {...props} /></div>, thead: (props) => <thead className="bg-neutral-100" {...props} />, th: (props) => <th className="border border-neutral-300 px-4 py-2 text-left font-semibold text-neutral-800" {...props} />, td: (props) => <td className="border border-neutral-200 px-4 py-2 text-neutral-700" {...props} />, code: (props) => props.inline ? <code className="bg-neutral-200 text-neutral-800 rounded px-1.5 py-1 font-mono text-sm" {...props} /> : <pre className="bg-neutral-800 text-neutral-100 p-4 rounded-md my-4 overflow-x-auto"><code className="font-mono" {...props} /></pre>};
+  return ( <div className="relative h-full w-full p-6 md:p-8 pb-32 lg:pb-8"> {showCopyButton && ( <div className="flex justify-end mb-4"> <button onClick={handleCopy} disabled={copied} className="flex items-center gap-1 px-4 py-2 border border-gray-300 rounded-lg text-sm font-semibold bg-white text-neutral-700 hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-white"> {copied ? <CheckIcon className="h-4 w-4 text-green-600" /> : <CopyIcon className="h-4 w-4 text-neutral-600" />} {copied ? 'Copied!' : 'Copy Report'} </button> </div> )} <div className="prose max-w-none"> <ReactMarkdown remarkPlugins={[remarkGfm]} components={MarkdownComponents}>{report}</ReactMarkdown> </div> {isStreaming && ( <div className="flex items-center text-gray-500 mt-4"> <div className="w-2.5 h-2.5 bg-primary rounded-full mr-2"></div> <span>Compiling report</span> <span className="animate-blink font-semibold ml-px">|</span> </div> )} {showPlaceholder && ( <div className="flex flex-col justify-center items-center h-full text-center text-gray-400"> <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="w-20 h-20 text-gray-300 mb-4"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg> <p className="text-lg font-medium text-gray-600">Your research report will appear here</p> <p className="text-sm">Enter a topic below to begin.</p> </div> )} </div> );
 };
 
-
 // --- components/SourcesPanel.tsx ---
-// UPDATED: Hover state on SourceCard is more polished. Text colors use neutral palette.
+// UPDATED: Skeleton loader now uses a more professional "shimmer" animation.
 const SourceCardSkeleton = () => (
-    <div className="bg-white p-4 rounded-lg border border-neutral-200 mb-3 animate-pulse">
-        <div className="h-4 bg-neutral-200 rounded w-3/4 mb-2"></div>
-        <div className="h-3 bg-neutral-200 rounded w-1/2 mb-4"></div>
-        <div className="h-3 bg-neutral-200 rounded w-full mb-1"></div>
-        <div className="h-3 bg-neutral-200 rounded w-full mb-1"></div>
-        <div className="h-3 bg-neutral-200 rounded w-5/6"></div>
+    <div className="relative overflow-hidden bg-white p-4 rounded-lg border border-neutral-200 mb-3">
+        <div className="space-y-3">
+            <div className="h-4 bg-neutral-200 rounded w-3/4"></div>
+            <div className="h-3 bg-neutral-200 rounded w-1/2"></div>
+            <div className="space-y-1">
+                <div className="h-3 bg-neutral-200 rounded w-full"></div>
+                <div className="h-3 bg-neutral-200 rounded w-5/6"></div>
+            </div>
+        </div>
+        <div className="absolute inset-0 transform -translate-x-full bg-gradient-to-r from-transparent via-white/50 to-transparent animate-[shimmer_1.5s_infinite]"></div>
     </div>
 );
 
-const SourceCard = ({ source }) => (
-  <div className="bg-white p-4 rounded-lg border border-neutral-200 mb-3 transition-all duration-300 hover:shadow-md hover:border-primary animate-fade-in">
-    <a href={source.url} target="_blank" rel="noopener noreferrer" className="text-primary font-semibold hover:underline block truncate text-base">{source.title}</a>
-    <p className="text-neutral-500 text-xs mt-1 mb-2 truncate">{source.url}</p>
-    <p className="text-neutral-700 text-sm leading-relaxed max-h-24 overflow-hidden overflow-ellipsis">{source.content}</p>
-    {source.analysis && ( <div className="mt-3 pt-3 border-t border-neutral-200"> <h4 className="font-semibold text-sm text-neutral-800 mb-1">AI Analysis</h4> <p className="text-neutral-600 text-sm leading-relaxed">{source.analysis}</p> </div> )}
-  </div>
-);
+const SourceCard = ({ source }) => ( <div className="bg-white p-4 rounded-lg border border-neutral-200 mb-3 transition-all duration-300 hover:shadow-md hover:border-primary animate-fade-in"> <a href={source.url} target="_blank" rel="noopener noreferrer" className="text-primary font-semibold hover:underline block truncate text-base">{source.title}</a> <p className="text-neutral-500 text-xs mt-1 mb-2 truncate">{source.url}</p> <p className="text-neutral-700 text-sm leading-relaxed max-h-24 overflow-hidden overflow-ellipsis">{source.content}</p> {source.analysis && ( <div className="mt-3 pt-3 border-t border-neutral-200"> <h4 className="font-semibold text-sm text-neutral-800 mb-1">AI Analysis</h4> <p className="text-neutral-600 text-sm leading-relaxed">{source.analysis}</p> </div> )} </div> );
 
 const SourcesPanel = ({ sources, stage }) => {
     const isLoading = stage === ResearchStage.SEARCHING || stage === ResearchStage.ANALYZING;
@@ -398,9 +343,7 @@ const SourcesPanel = ({ sources, stage }) => {
     );
 };
 
-
 // --- App.tsx ---
-// UPDATED: Layout structure and logic refined for a better responsive experience.
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 const App = () => {
   const [stage, setStage] = useState(ResearchStage.IDLE);
@@ -437,7 +380,6 @@ const App = () => {
 
   return (
     <div className="flex flex-col lg:flex-row h-screen bg-white text-neutral-800">
-       
        <div className="w-full lg:w-1/2 lg:max-w-2xl lg:h-full flex flex-col lg:border-r border-neutral-200 order-last lg:order-first">
         <div className="p-6 lg:p-8 flex flex-col gap-6 flex-1 min-h-0">
           <header className="hidden lg:block w-full text-left">
@@ -453,30 +395,22 @@ const App = () => {
             <QueryInput onSearch={handleSearch} isSearching={isResearching} />
         </div>
       </div>
-
       <div className="w-full lg:flex-1 h-full overflow-y-auto order-first lg:order-last">
-         {/* UPDATED: Mobile header is now sticky for a better scrolling experience */}
          <div className="p-4 sm:p-6 lg:hidden sticky top-0 bg-white/90 backdrop-blur-sm z-10 border-b border-neutral-200">
             <h1 className="text-xl font-semibold text-neutral-800 text-center">Research Report</h1>
-            {/* Mobile status bar is now placed here */}
-            <div className="mt-4">
-              <StatusBar stage={stage} error={error} />
-            </div>
+            <div className="mt-4"> <StatusBar stage={stage} error={error} /> </div>
          </div>
          <ReportPanel report={report} stage={stage} />
       </div>
-
     </div>
   );
 };
-
 
 // --- index.tsx ---
 const rootElement = document.getElementById('root');
 if (!rootElement) { throw new Error("Could not find root element to mount to"); }
 const root = ReactDOM.createRoot(rootElement);
 root.render( <React.StrictMode> <App /> </React.StrictMode> );
-
     </script>
 </body>
 </html>
