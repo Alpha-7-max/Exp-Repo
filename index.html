@@ -3,294 +3,540 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Deep Research Agent</title>
-    
+    <title>Insight - Your AI Partner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              primary: { DEFAULT: '#4A90E2', hover: '#357ABD' },
-              neutral: { 50: '#F9FAFB', 100: '#F3F4F6', 200: '#E5E7EB', 300: '#D1D5DB', 400: '#9CA3AF', 500: '#6B7280', 600: '#4B5563', 700: '#374151', 800: '#1F2937', 900: '#111827' }
-            },
-            keyframes: {
-                shimmer: { '100%': { transform: 'translateX(100%)' }, },
-            },
-          }
-        }
-      }
-    </script>
-    
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <script type="importmap">
-{
-  "imports": {
-    "@google/genai": "https://esm.sh/@google/genai@^1.7.0",
-    "react-markdown": "https://esm.sh/react-markdown@^10.1.0",
-    "remark-gfm": "https://esm.sh/remark-gfm@^4.0.1",
-    "react": "https://esm.sh/react@^19.1.0",
-    "react-dom/": "https://esm.sh/react-dom@^19.1.0/",
-    "react/": "https://esm.sh/react@^19.1.0/"
-  }
-}
-</script>
-    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; overflow: hidden; }
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
-        @keyframes blink { 50% { opacity: 0; } }
-        .animate-blink { animation: blink 1s step-start infinite; }
+        * {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        *::-webkit-scrollbar {
+            display: none;
+        }
+        
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #030712; 
+            color: #D1D5DB; 
+            min-height: 100vh; 
+            overflow-x: hidden; 
+            background-image: radial-gradient(ellipse at top left, rgba(23, 37, 84, 0.5) 0%, transparent 50%), radial-gradient(ellipse at bottom right, rgba(59, 130, 246, 0.3) 0%, transparent 50%);
+            margin: 0;
+            padding: 0;
+        }
+        
+        .glassmorphic-panel { 
+            background: rgba(17, 24, 39, 0.8); 
+            backdrop-filter: blur(20px) saturate(180%); 
+            -webkit-backdrop-filter: blur(20px) saturate(180%); 
+            border: 1px solid rgba(255, 255, 255, 0.12); 
+        }
+        
+        .chat-message-container { 
+            flex: 1;
+            overflow-y: auto; 
+            scroll-behavior: smooth;
+            position: relative;
+            padding: 0 0.5rem;
+        }
+        
+        .custom-scrollbar {
+            position: absolute;
+            right: 4px;
+            top: 8px;
+            bottom: 8px;
+            width: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .custom-scrollbar-thumb {
+            position: absolute;
+            right: 0;
+            width: 4px;
+            background: rgba(99, 102, 241, 0.6);
+            border-radius: 2px;
+            transition: background-color 0.3s;
+        }
+        
+        .custom-scrollbar:hover .custom-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.8);
+        }
+        
+        .chat-message-container:hover .custom-scrollbar {
+            opacity: 1;
+        }
+        
+        .chat-bubble { 
+            max-width: 85%; 
+            word-wrap: break-word; 
+        }
+        
+        .user-bubble { 
+            background-color: rgba(59, 130, 246, 0.2); 
+            border: 1px solid rgba(59, 130, 246, 0.3); 
+        }
+        
+        .ai-bubble { 
+            background-color: rgba(30, 41, 59, 0.8); 
+            border: 1px solid rgba(55, 65, 81, 1); 
+        }
+        
+        .image-pill { 
+            display: inline-flex; 
+            align-items: center; 
+            background-color: rgba(79, 70, 229, 0.3); 
+            border: 1px solid rgba(99, 102, 241, 0.5); 
+            border-radius: 9999px; 
+            padding: 4px; 
+            gap: 6px; 
+            font-size: 0.8rem; 
+        }
+        
+        .image-pill img { 
+            width: 24px; 
+            height: 24px; 
+            border-radius: 50%; 
+            object-fit: cover; 
+        }
+        
+        .image-pill .remove-pill { 
+            background: rgba(239, 68, 68, 0.7); 
+            border-radius: 50%; 
+            width: 18px; 
+            height: 18px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            cursor: pointer; 
+            transition: background-color 0.2s; 
+        }
+        
+        .image-pill .remove-pill:hover { 
+            background: rgba(220, 38, 38, 1); 
+        }
+        
+        .chat-image-container img { 
+            width: 100%; 
+            max-width: 400px; 
+            height: auto; 
+            border-radius: 0.5rem; 
+            margin-top: 0.75rem; 
+            border: 1px solid rgba(99, 102, 241, 0.3); 
+            background-color: #030712; 
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .chat-bubble {
+                max-width: 90%;
+                font-size: 0.9rem;
+            }
+            .image-pill {
+                font-size: 0.7rem;
+                padding: 3px;
+            }
+            .image-pill img {
+                width: 20px;
+                height: 20px;
+            }
+            .chat-image-container img {
+                max-width: 100%;
+            }
+        }
+        
+        /* CHANGE 1: Removed the media query that added margin on small screens to allow edge-to-edge layout */
     </style>
 </head>
-<body class="bg-white">
-    <div id="root"></div>
-    <script type="text/babel" data-type="module">
-// --- Polyfill, Dependencies, types.ts ---
-const process = { env: { API_KEY: "AIzaSyDgEdgBX2VWf2PO4X29haQzISTDTemzuW4" } };
-import React, { useState, useCallback, useEffect } from 'react';
-import ReactDOM from 'react-dom/client';
-import { GoogleGenAI } from "@google/genai";
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+<!-- CHANGE 1: Body padding is removed for mobile and applied only for 'sm' screens and up -->
+<body class="sm:p-4">
 
-const ResearchStage = { IDLE: 'IDLE', OPTIMIZING: 'OPTIMIZING', SEARCHING: 'SEARCHING', ANALYZING: 'ANALYZING', COMPILING: 'COMPILING', DONE: 'DONE', ERROR: 'ERROR' };
-
-// --- services/geminiService.ts ---
-const MODEL_NAME = 'gemini-2.0-flash';
-
-// UPDATED: Query enhancer now adds academic keywords to prioritize finding research papers.
-const translateAndEnhanceQuery = async (query, ai) => {
-    const prompt = `You are an expert search query enhancer. Your task is to take a user's query and convert it into a highly effective, detailed English search query suitable for finding **academic and technical sources**.
-
-    **User's Original Query:** "${query}"
-
-    **Instructions:**
-    1.  Translate the query to English if it isn't already.
-    2.  Enhance the translated query by adding relevant keywords. Crucially, append terms that are likely to find academic papers and formal research, such as **"academic paper", "research study", "technical report", "PDF", "arXiv", "peer-reviewed"**.
-    3.  Return ONLY a single JSON object with one key: "enhanced_query".
-
-    **Example 1:**
-    Original Query: "quantum computing principles"
-    Your Output:
-    {
-      "enhanced_query": "principles of quantum computing academic paper research study filetype:pdf"
-    }
-
-    **Example 2:**
-    Original Query: "एलएलएम के नैतिक प्रभाव क्या हैं?"
-    Your Output:
-    {
-      "enhanced_query": "ethical implications of large language models (LLMs) in society research study arXiv"
-    }
-
-    Now, provide the JSON output for the user's original query provided above.`;
-    try {
-        const result = await ai.models.generateContent({ model: MODEL_NAME, contents: prompt, config: { temperature: 0.1 } });
-        let jsonStr = result.text.trim().match(/```(\w*)?\s*\n?(.*?)\n?\s*```/s)?.[2]?.trim() || result.text.trim();
-        const parsed = JSON.parse(jsonStr);
-        console.log("Academically Enhanced Query:", parsed.enhanced_query);
-        return parsed.enhanced_query || query;
-    } catch (error) { console.error("Error enhancing query:", error); return query; }
-};
-
-const analyzeSources = async (sources, ai) => {
-    const sourceContentForAnalysis = sources.map(s => ({ url: s.url, content: s.content.substring(0, 4000) }));
-    const prompt = `You are an expert research analyst. Your task is to perform a deep analysis of provided web content. For each source, read the content and extract the key arguments, data, and conclusions. **Input Data (JSON array of sources):** ${JSON.stringify(sourceContentForAnalysis)} **Instructions:** 1. Analyze each source's content individually. 2. Produce a concise, insightful analysis for each, summarizing the main points and key takeaways. 3. Return your output as a single, valid JSON array of objects. Each object must have two keys: "url" (the original URL of the source) and "analysis" (your summary). 4. Do not include any other text, markdown, or explanation outside of the JSON array. Your response must be only the JSON.`;
-    try {
-        const result = await ai.models.generateContent({ model: MODEL_NAME, contents: prompt, config: { temperature: 0.2 } });
-        let jsonStr = result.text.trim().match(/```(\w*)?\s*\n?(.*?)\n?\s*```/s)?.[2]?.trim() || result.text.trim();
-        const analyses = JSON.parse(jsonStr);
-        const analysisMap = new Map(analyses.map(a => [a.url, a.analysis]));
-        return sources.map(source => ({ ...source, analysis: analysisMap.get(source.url) || "No specific analysis could be generated for this source." }));
-    } catch (error) { console.error("Error analyzing sources:", error); return sources.map(s => ({ ...s, analysis: "AI analysis failed. Using original content snippet." })); }
-};
-
-// UPDATED: New, highly detailed academic-style instructions.
-const generateReportStream = async (query, sources, ai) => {
-    const sourcesText = sources
-        .filter(s => s.analysis && !s.analysis.includes("failed"))
-        .map((s, i) => `Source [${i+1}] (${s.title}):\nURL: ${s.url}\nAI-Generated Analysis: ${s.analysis}`)
-        .join('\n\n');
-
-    const prompt = `
-You are Deep Research Agent, an advanced AI analyst trained to generate professional, academic-standard research reports. Your goal is to transform the AI-generated source analyses into a comprehensive, credible, and polished report that closely resembles a high-level academic or journalistic investigation.
-
----
-🎯 **Original Research Question (from the user):**
-${query}
-
----
-📄 **Provided Source Analyses:**
-${sourcesText}
-
----
-💼 **Instructions:**
-
-1️⃣ **Synthesize from Analysis**
-Your primary material is the provided AI-generated source analyses. Weave these insights together into a single, coherent narrative that directly addresses the original research question. Go beyond simply summarizing — analyze, compare, and evaluate different claims or data points to build a logical argument.
-
-2️⃣ **Academic and Professional Tone**
-Write with a formal, objective, and authoritative style, similar to that used in peer-reviewed journals or investigative reports. Avoid casual or conversational phrasing. Maintain neutrality; avoid emotional or subjective language.
-
-3️⃣ **Advanced Structure and Formatting**
-Use advanced Markdown for clarity and hierarchy. The final report MUST include these sections in this order:
-
-*   **# Title:** A clear, academic-style title summarizing the topic.
-*   **## Abstract:** A concise summary of the report’s purpose, key findings, and conclusion.
-*   **## Introduction:** Context and background to the research question.
-*   **## Analysis / Key Findings:** Detailed synthesis and evaluation of source insights. This is the main body of the report.
-*   **## Limitations and Future Outlook:** Acknowledge the limitations of the current understanding or data. Discuss challenges (e.g., error rates, scalability) and suggest directions for future research.
-*   **## Conclusion:** Provide a formal conclusion. Do not just summarize. Synthesize the key findings to establish their significance and reinforce the report's main argument. Reiterate why this topic is important and what its broader implications are.
-*   **## References:** A numbered list of all sources used.
-
-4️⃣ **Citations and References (Crucial)**
-*   **In-Text Citations:** When referencing information, cite it inline parenthetically, like **(Source [1])**.
-*   **References Section:** At the end, under the "## References" heading, create a **numbered list**. Each number must correspond exactly to the source number used in the text.
-
-    *Example:*
-    In the text: "...quantum entanglement allows for this phenomenon (Source [2])."
-    In the references section:
-    2. [Quantum computing - Wikipedia](https://en.wikipedia.org/wiki/Quantum_computing)
-
-5️⃣ **Tables and Lists**
-Where appropriate, use Tables, Bullet/Numbered lists, or Blockquotes to present data or compare points clearly.
-
----
-Begin the report now.
-    `;
-
-    try {
-        return await ai.models.generateContentStream({ model: MODEL_NAME, contents: prompt, config: { temperature: 0.5 } });
-    } catch (error) { console.error("Error generating report:", error); throw new Error(JSON.stringify(error) || "Failed to generate the research report."); }
-};
-
-
-// --- services/searchService.ts, icons, components (QueryInput, ReportPanel) ---
-// (These sections are unchanged and shortened for brevity)
-const TAVILY_API_KEY = "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"; const BRAVE_API_KEY = "BSA2_RrvzlC4vU0-05O6FWmpSMBR3_v"; const fetchSourcesFromTavily = async (query) => { try { const response = await fetch('https://api.tavily.com/search', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ api_key: TAVILY_API_KEY, query: query, search_depth: 'advanced', max_results: 5, }), }); if (!response.ok) throw new Error(`Tavily API error: ${response.statusText}`); const data = await response.json(); return data.results.map((r) => ({ title: r.title, url: r.url, content: r.content })); } catch (e) { console.error("Error fetching from Tavily:", e); return []; } }; const fetchSourcesFromBrave = async (query) => { try { const response = await fetch(`https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}`, { headers: { 'Accept': 'application/json', 'X-Subscription-Token': BRAVE_API_KEY }, }); if (!response.ok) throw new Error(`Brave API error: ${response.statusText}`); const data = await response.json(); return (data.web?.results || []).map((r) => ({ title: r.title, url: r.url, content: r.description })); } catch (e) { console.error("Error fetching from Brave:", e); return []; } }; const fetchSourcesFromGoogle = async (query, ai) => { try { const result = await ai.models.generateContent({ model: MODEL_NAME, contents: `Using Google Search, find relevant sources and provide a brief overview for the topic: ${query}`, config: { tools: [{googleSearch: {}}] }, }); let sources = []; if (result.candidates?.[0]?.groundingMetadata?.groundingChunks) { sources = result.candidates[0].groundingMetadata.groundingChunks.map((c) => ({ title: c.web?.title, url: c.web?.uri, content: c.web?.snippet })).filter(s => s.url && s.title && s.content); } return sources; } catch (e) { console.error("Error fetching from Google Search via Gemini:", e); throw new Error(JSON.stringify(e) || "Failed to fetch from Google Search"); } }; const fetchSources = async (query, ai) => { try { const [googleResults, tavilyResults, braveResults] = await Promise.all([ fetchSourcesFromGoogle(query, ai), fetchSourcesFromTavily(query), fetchSourcesFromBrave(query) ]); const allResults = [...googleResults, ...tavilyResults, ...braveResults]; return allResults.filter((v, i, a) => a.findIndex(t => (t.url === v.url)) === i); } catch (error) { console.error("Error fetching sources:", error); throw error; } };
-const SearchIcon = ({ className }) => ( <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}> <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /> </svg> ); const LoadingSpinner = ({ className }) => ( <svg className={`animate-spin ${className}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"> <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle> <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path> </svg> ); const CopyIcon = ({ className }) => ( <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className={className}> <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25H9.75m6-4H9.75m6-4H9.75m4.5 10.5h2.25a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H15M12 18.75l3-3m-3 0l-3 3m-2.25-4.5H5.625c-.621 0-1.125-.504-1.125-1.125V3.65937c0-.621.504-1.125 1.125-1.125H17.25c.621 0 1.125.504 1.125 1.125V10.5m-10.5 6L9.75 17.25c-.621 0-1.125-.504-1.125-1.125V3.65937c0-.621.504-1.125 1.125-1.125H17.25c.621 0 1.125.504 1.125 1.125V10.5m-10.5 6L9.75 17.25" /> </svg> ); const CheckIcon = ({ className }) => ( <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className={className}> <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /> </svg> );
-const QueryInput = ({ onSearch, isSearching }) => { const [query, setQuery] = useState(''); const handleSubmit = (e) => { e.preventDefault(); if (query.trim() && !isSearching) onSearch(query); }; return ( <form onSubmit={handleSubmit} className="w-full"> <div className="fixed bottom-0 left-0 w-full p-3 bg-white/80 backdrop-blur-sm border-t border-gray-200 lg:relative lg:p-0 lg:border-none lg:bg-transparent lg:backdrop-blur-none z-20"> <div className="relative rounded-full lg:rounded-xl transition-all duration-300 ring-offset-2 ring-offset-white lg:focus-within:ring-2 lg:focus-within:ring-neutral-900"> <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Ask a research question..." className="w-full h-14 p-4 pr-14 border border-gray-300 rounded-full shadow-md focus:outline-none focus:ring-2 focus:ring-primary lg:h-16 lg:text-base lg:rounded-xl lg:pr-36 lg:shadow-sm lg:focus:ring-0" disabled={isSearching} /> <button type="submit" disabled={isSearching || !query.trim()} className="absolute top-1/2 -translate-y-1/2 right-2 bg-primary text-white rounded-full w-10 h-10 flex items-center justify-center transition-all duration-300 hover:bg-primary-hover disabled:bg-gray-400 disabled:cursor-not-allowed lg:w-32 lg:h-12 lg:px-4 lg:py-3 lg:rounded-lg lg:right-2 lg:gap-2 lg:text-base"> {isSearching ? <LoadingSpinner className="h-5 w-5" /> : <SearchIcon className="h-5 w-5 lg:h-6 lg:w-6" />} <span className="hidden lg:inline font-semibold">{isSearching ? 'Researching...' : 'Research'}</span> </button> </div> </div> </form> ); };
-const ReportPanel = ({ report, stage }) => { const [copied, setCopied] = useState(false); const isStreaming = stage === ResearchStage.COMPILING; const isDone = stage === ResearchStage.DONE; const showPlaceholder = stage === ResearchStage.IDLE || stage === ResearchStage.ERROR || (isDone && !report); const showCopyButton = isDone && report; const handleCopy = useCallback(async () => { if (!report || copied) return; try { await navigator.clipboard.writeText(report); setCopied(true); } catch (err) { console.error("Failed to copy report:", err); } }, [report, copied]); useEffect(() => { if (copied) { const timer = setTimeout(() => { setCopied(false); }, 3000); return () => clearTimeout(timer); } }, [copied]); const MarkdownComponents = { h1: (props) => <h1 className="text-3xl lg:text-4xl font-bold text-neutral-900 mb-6 pb-2 border-b border-neutral-200" {...props} />, h2: (props) => <h2 className="text-2xl lg:text-3xl font-bold text-neutral-800 mt-8 mb-4 pb-1 border-b border-neutral-200" {...props} />, h3: (props) => <h3 className="text-xl lg:text-2xl font-semibold text-neutral-800 mt-6 mb-3" {...props} />, p: (props) => <p className="mb-5 leading-relaxed text-base" {...props} />, ul: (props) => <ul className="list-disc list-inside mb-5 pl-4 space-y-2" {...props} />, ol: (props) => <ol className="list-decimal list-inside mb-5 pl-4 space-y-2" {...props} />, li: (props) => <li className="mb-2" {...props} />, a: (props) => <a className="text-primary hover:underline" target="_blank" rel="noopener noreferrer" {...props} />, blockquote: (props) => <blockquote className="border-l-4 border-primary bg-neutral-50 p-4 my-6 italic text-gray-700" {...props} />, table: (props) => <div className="overflow-x-auto my-6"><table className="table-auto w-full border-collapse border border-neutral-300" {...props} /></div>, thead: (props) => <thead className="bg-neutral-100" {...props} />, th: (props) => <th className="border border-neutral-300 px-4 py-2 text-left font-semibold text-neutral-800" {...props} />, td: (props) => <td className="border border-neutral-200 px-4 py-2 text-neutral-700" {...props} />, code: (props) => props.inline ? <code className="bg-neutral-200 text-neutral-800 rounded px-1.5 py-1 font-mono text-sm" {...props} /> : <pre className="bg-neutral-800 text-neutral-100 p-4 rounded-md my-4 overflow-x-auto"><code className="font-mono" {...props} /></pre>}; return ( <div className="relative h-full w-full p-6 md:p-8 pb-32 lg:pb-8"> {showCopyButton && ( <div className="flex justify-end mb-4"> <button onClick={handleCopy} disabled={copied} className="flex items-center gap-1 px-4 py-2 border border-gray-300 rounded-lg text-sm font-semibold bg-white text-neutral-700 hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-white"> {copied ? <CheckIcon className="h-4 w-4 text-green-600" /> : <CopyIcon className="h-4 w-4 text-neutral-600" />} {copied ? 'Copied!' : 'Copy Report'} </button> </div> )} <div className="prose max-w-none"> <ReactMarkdown remarkPlugins={[remarkGfm]} components={MarkdownComponents}>{report}</ReactMarkdown> </div> {isStreaming && ( <div className="flex items-center text-gray-500 mt-4"> <div className="w-2.5 h-2.5 bg-primary rounded-full mr-2"></div> <span>Compiling report</span> <span className="animate-blink font-semibold ml-px">|</span> </div> )} {showPlaceholder && ( <div className="flex flex-col justify-center items-center h-full text-center text-gray-400"> <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="w-20 h-20 text-gray-300 mb-4"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg> <p className="text-lg font-medium text-gray-600">Your research report will appear here</p> <p className="text-sm">Enter a topic below to begin.</p> </div> )} </div> ); };
-
-// --- components/StatusBar.tsx ---
-const STAGES_CONFIG = [ { id: ResearchStage.OPTIMIZING, label: 'Optimizing' }, { id: ResearchStage.SEARCHING, label: 'Searching' }, { id: ResearchStage.ANALYZING, label: 'Analyzing' }, { id: ResearchStage.COMPILING, label: 'Compiling' }, ];
-const StatusBar = ({ stage, error }) => {
-    if (stage === ResearchStage.IDLE) return <div className="p-4 rounded-lg bg-neutral-100 text-neutral-600 text-center text-sm font-semibold">Ready for research.</div>;
-    if (stage === ResearchStage.ERROR) return <div className="p-4 rounded-lg bg-red-100 text-red-800 text-center text-sm font-semibold">{error || "An unknown error occurred."}</div>;
-    if (stage === ResearchStage.DONE) return <div className="p-4 rounded-lg bg-green-100 text-green-800 text-center text-sm font-semibold">Research complete. The report is ready.</div>;
-    const currentStageIndex = STAGES_CONFIG.findIndex(s => s.id === stage);
-    const progressPercentage = ((currentStageIndex + 1) / STAGES_CONFIG.length) * 100;
-    return (
-        <div className="w-full p-4 rounded-lg bg-neutral-100 border border-neutral-200">
-            <div className="w-full bg-neutral-200 rounded-full h-2.5 mb-3">
-                <div className="bg-primary h-2.5 rounded-full transition-all duration-500" style={{ width: `${progressPercentage}%` }}></div>
+    <!-- CHANGE 1: Height is 100vh on mobile and 95vh on sm+ screens -->
+    <main class="w-full max-w-4xl mx-auto flex flex-col h-[100vh] sm:h-[95vh]">
+        <div class="flex items-center justify-center mb-4 sm:mb-6 pt-4 sm:pt-0">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-8 h-8 sm:w-9 sm:h-9 text-indigo-400">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 12.75V15m0-6.75V6" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75v.008" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 12h.008v.008H7.5V12zm9 0h.008v.008H16.5V12z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12a7.5 7.5 0 1115 0 7.5 7.5 0 01-15 0z" fill="currentColor" opacity="0.2" />
+            </svg>
+            <span class="ml-3 font-bold text-2xl sm:text-3xl text-slate-100" style="font-family: 'Orbitron', sans-serif;">INSIGHT</span>
+        </div>
+        
+        <!-- CHANGE 1: Rounding is removed for mobile (sharp corners) and applied only on sm+ screens -->
+        <div class="glassmorphic-panel p-3 sm:p-4 md:p-6 sm:rounded-xl md:rounded-2xl flex-grow flex flex-col min-h-0">
+            <div class="chat-message-container space-y-3 sm:space-y-4 flex-grow min-h-0 relative">
+                <div class="custom-scrollbar">
+                    <div class="custom-scrollbar-thumb"></div>
+                </div>
+                <div class="flex justify-start">
+                    <div class="ai-bubble p-3 rounded-lg">
+                        <!-- CHANGE 2: Initial message converted to English -->
+                        <p>Hello! I'm Insight, your multi-modal AI partner. You can chat with me, analyze images, or request new ones. How can I help you today?</p>
+                    </div>
+                </div>
             </div>
-            <div className="flex justify-between text-xs font-semibold text-neutral-500">
-                {STAGES_CONFIG.map((s) => ( <div key={s.id} className={`flex items-center gap-1.5 ${stage === s.id ? 'text-primary' : ''}`}> {stage === s.id && <LoadingSpinner className="h-3 w-3" />} <span>{s.label}</span> </div> ))}
+            
+            <div class="mt-3 sm:mt-4 p-3 bg-slate-800/50 border border-slate-700 rounded-lg">
+                <div id="image-pills-container" class="flex flex-wrap gap-2 mb-2"></div>
+                <div class="flex items-start gap-2 sm:gap-3">
+                    <button id="attach-image-button" class="flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12 bg-indigo-500/20 text-indigo-300 rounded-lg flex items-center justify-center hover:bg-indigo-500/30 transition-colors">
+                        <i class="fas fa-paperclip text-lg sm:text-xl"></i>
+                    </button>
+                    <input type="file" id="image-input" class="hidden" multiple accept="image/png, image/jpeg, image/webp">
+                    <textarea id="chatInput" class="flex-grow bg-slate-900 border border-slate-600 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none text-sm sm:text-base" placeholder="Type your message..." rows="1"></textarea>
+                    <button id="chatSendButton" class="flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12 bg-indigo-600 text-white rounded-lg flex items-center justify-center hover:bg-indigo-500 transition-colors">
+                        <i class="fas fa-paper-plane text-lg sm:text-xl"></i>
+                    </button>
+                </div>
             </div>
         </div>
-    );
-};
+    </main>
 
-// --- components/SourcesPanel.tsx ---
-const SourceCardSkeleton = () => ( <div className="relative overflow-hidden bg-white p-4 rounded-lg border border-neutral-200 mb-3"> <div className="space-y-3"> <div className="h-4 bg-neutral-200 rounded w-3/4"></div> <div className="h-3 bg-neutral-200 rounded w-1/2"></div> <div className="space-y-1"> <div className="h-3 bg-neutral-200 rounded w-full"></div> <div className="h-3 bg-neutral-200 rounded w-5/6"></div> </div> </div> <div className="absolute inset-0 transform -translate-x-full bg-gradient-to-r from-transparent via-white/50 to-transparent animate-[shimmer_1.5s_infinite]"></div> </div> );
-const SourceCard = ({ source }) => ( <div className="bg-white p-4 rounded-lg border border-neutral-200 mb-3 transition-all duration-300 hover:shadow-md hover:border-primary animate-fade-in"> <a href={source.url} target="_blank" rel="noopener noreferrer" className="text-primary font-semibold hover:underline block truncate text-base">{source.title}</a> <p className="text-neutral-500 text-xs mt-1 mb-2 truncate">{source.url}</p> <p className="text-neutral-700 text-sm leading-relaxed max-h-24 overflow-hidden overflow-ellipsis">{source.content}</p> {source.analysis && ( <div className="mt-3 pt-3 border-t border-neutral-200"> <h4 className="font-semibold text-sm text-neutral-800 mb-1">AI Analysis</h4> <p className="text-neutral-600 text-sm leading-relaxed">{source.analysis}</p> </div> )} </div> );
-const SourcesPanel = ({ sources, stage }) => {
-    const isLoading = stage === ResearchStage.SEARCHING || stage === ResearchStage.ANALYZING;
-    const showSources = sources.length > 0;
-    return (
-        <div className="hidden w-full bg-neutral-100/70 p-4 rounded-lg border border-neutral-200 lg:flex flex-col flex-1 min-h-0">
-          <h2 className="text-xl font-bold mb-4 text-neutral-800 flex-shrink-0">Sources</h2>
-          <div className="overflow-y-auto pr-2 flex-1">
-            {isLoading && !showSources && Array.from({ length: 3 }).map((_, i) => <SourceCardSkeleton key={i} />)}
-            {showSources && sources.map((source, index) => <SourceCard key={`${source.url}-${index}`} source={source} />)}
-            {!isLoading && !showSources && ( <div className="text-center text-neutral-500 flex-1 flex items-center justify-center h-full"> <p>Sources will appear here.</p> </div> )}
-          </div>
-        </div>
-    );
-};
+    <script>
+        // --- CONFIGURATION ---
+        const API_KEY = "AIzaSyCP0_JSlzsnNKczFe-dBTZyoyKBwvvP6UE"; 
+        const MULTIMODAL_MODEL_NAME = "gemini-2.5-flash-preview-04-17";
+        const MAX_IMAGES_PER_MSG = 4;
 
-// --- App.tsx ---
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-const App = () => {
-  const [stage, setStage] = useState(ResearchStage.IDLE);
-  const [report, setReport] = useState('');
-  const [sources, setSources] = useState([]);
-  const [error, setError] = useState(null);
-  const isResearching = stage !== ResearchStage.IDLE && stage !== ResearchStage.DONE && stage !== ResearchStage.ERROR;
+        // NOTE: Master prompt is unchanged, so AI still replies in Roman Urdu as requested.
+        const MASTER_PROMPT = `You are 'Insight', a genius-level, multi-modal AI assistant with persistent memory. You will receive the full CHAT_HISTORY, the LATEST_USER_MESSAGE, any NEWLY_UPLOADED_IMAGES, and crucially, the 'ACTIVE_IMAGE_PROMPT' which is the prompt that created the last image in the conversation.
 
-  const handleSearch = useCallback(async (query) => {
-    if (!query.trim() || isResearching) return;
-    setStage(ResearchStage.IDLE); setReport(''); setSources([]); setError(null);
-    try {
-      setStage(ResearchStage.OPTIMIZING);
-      const enhancedQuery = await translateAndEnhanceQuery(query, ai);
-      setStage(ResearchStage.SEARCHING);
-      const fetchedSources = await fetchSources(enhancedQuery, ai);
-      if (fetchedSources.length === 0) throw new Error("Could not find relevant sources. Please try a different query.");
-      setSources(fetchedSources);
-      setStage(ResearchStage.ANALYZING);
-      const analyzedSources = await analyzeSources(fetchedSources, ai);
-      setSources(analyzedSources);
-      setStage(ResearchStage.COMPILING);
-      const stream = await generateReportStream(query, analyzedSources, ai);
-      let fullReport = '';
-      for await (const chunk of stream) { fullReport += chunk.text; setReport(fullReport); }
-      setStage(ResearchStage.DONE);
-    } catch (e) {
-      console.error(e);
-      let errorMessage = "An unknown error occurred.";
-      if (e.message) { try { const errorObj = JSON.parse(e.message); errorMessage = errorObj?.error?.message || e.message; } catch { errorMessage = e.message; } }
-      setError(errorMessage); setStage(ResearchStage.ERROR);
-    }
-  }, [isResearching]);
+IMPORTANT: You must respond in Roman Urdu (Urdu written in English alphabet) for all conversational text. However, for image generation prompts, you must ALWAYS use English only.
 
-  return (
-    <div className="flex flex-col lg:flex-row h-screen bg-white text-neutral-800">
-       <div className="w-full lg:w-1/2 lg:max-w-2xl lg:h-full flex flex-col lg:border-r border-neutral-200 order-last lg:order-first">
-        <div className="p-6 lg:p-8 flex flex-col gap-6 flex-1 min-h-0">
-          <header className="hidden lg:block w-full text-left">
-            <h1 className="text-3xl font-bold text-neutral-900">AI Deep Research Agent</h1>
-            <p className="mt-2 text-md text-neutral-600">Your intelligent partner for in-depth analysis and reporting.</p>
-          </header>
-          <main className="w-full flex-col gap-4 flex-1 min-h-0 hidden lg:flex">
-            <StatusBar stage={stage} error={error} />
-            <SourcesPanel sources={sources} stage={stage} />
-          </main>
-        </div>
-        <div className="w-full mt-auto p-4 lg:p-8 lg:pt-0">
-            <QueryInput onSearch={handleSearch} isSearching={isResearching} />
-        </div>
-      </div>
-      <div className="w-full lg:flex-1 h-full overflow-y-auto order-first lg:order-last">
-         <div className="p-4 sm:p-6 lg:hidden sticky top-0 bg-white/90 backdrop-blur-sm z-10 border-b border-neutral-200">
-            <h1 className="text-xl font-semibold text-neutral-800 text-center">Research Report</h1>
-            <div className="mt-4"> <StatusBar stage={stage} error={error} /> </div>
-         </div>
-         <ReportPanel report={report} stage={stage} />
-      </div>
-    </div>
-  );
-};
+CRITICAL: Your entire output must be ONLY the JSON object and nothing else. Do not add any introductory text, apologies, or explanations outside of the JSON structure.
 
-// --- index.tsx ---
-const rootElement = document.getElementById('root');
-if (!rootElement) { throw new Error("Could not find root element to mount to"); }
-const root = ReactDOM.createRoot(rootElement);
-root.render( <React.StrictMode> <App /> </React.StrictMode> );
+Your response MUST be in a valid JSON format:
+{
+  "text_response": "Your conversational reply to the user in Roman Urdu. This should be friendly, natural, and explain what you are doing if generating an image.",
+  "image_generation_prompt": "If you decide to generate/edit an image, create a detailed, single-paragraph prompt for a text-to-image AI here IN ENGLISH ONLY. Otherwise, this MUST be null."
+}
+
+YOUR DECISION LOGIC:
+1.  **If NEWLY_UPLOADED_IMAGES exist:** Your top priority is these new images. The ACTIVE_IMAGE_PROMPT should be ignored.
+    - If there is ONE new image and the user asks to edit it (e.g., 'make this girl's dress blue'), create an image prompt describing the edited scene.
+    - If there are MULTIPLE new images, the user wants to compose a scene. Create a prompt that combines the subjects from all images as per their text instructions.
+    - If the user just asks to analyze ("what is this?"), provide the analysis in 'text_response' and set 'image_generation_prompt' to null.
+2.  **If NO new images are attached, BUT 'ACTIVE_IMAGE_PROMPT' exists:** This means the user wants to modify the LAST image you showed them.
+    - Your job is to be a PRECISION EDITOR. Surgically modify the 'ACTIVE_IMAGE_PROMPT' with the user's new instructions (e.g., change color, add an item). Do NOT change anything else. The original visual context is paramount.
+3.  **If NO new images AND NO 'ACTIVE_IMAGE_PROMPT':** This is a fresh conversation.
+    - If the user's message is inherently visual ("show me a picture of Saturn"), create an 'image_generation_prompt'.
+    - Otherwise, have a normal text-based conversation, keeping 'image_generation_prompt' as null.
+
+CHAT HISTORY (for context):
+{CHAT_HISTORY}
+
+ACTIVE IMAGE PROMPT (from last turn, if any):
+{ACTIVE_IMAGE_PROMPT}
+
+LATEST USER MESSAGE:
+"{USER_MESSAGE}"`;
+
+        // --- ELEMENT SELECTORS ---
+        const chatMessageContainerEl = document.querySelector('.chat-message-container');
+        const chatInputEl = document.getElementById('chatInput');
+        const chatSendButtonEl = document.getElementById('chatSendButton');
+        const attachImageButtonEl = document.getElementById('attach-image-button');
+        const imageInputEl = document.getElementById('image-input');
+        const imagePillsContainerEl = document.getElementById('image-pills-container');
+
+        // --- STATE VARIABLES ---
+        let stagedImages = []; 
+        let chatHistory = [];
+        let activeImagePrompt = null; 
+        let isProcessing = false;
+
+        // --- CUSTOM SCROLLBAR FUNCTIONALITY ---
+        function initCustomScrollbar() {
+            const container = chatMessageContainerEl;
+            const scrollbar = container.querySelector('.custom-scrollbar');
+            const thumb = scrollbar.querySelector('.custom-scrollbar-thumb');
+            
+            function updateScrollbar() {
+                const scrollHeight = container.scrollHeight;
+                const clientHeight = container.clientHeight;
+                const scrollTop = container.scrollTop;
+                
+                if (scrollHeight <= clientHeight) {
+                    scrollbar.style.opacity = '0';
+                    return;
+                }
+                
+                const thumbHeight = Math.max(20, (clientHeight / scrollHeight) * clientHeight);
+                const thumbTop = (scrollTop / scrollHeight) * clientHeight;
+                
+                thumb.style.height = thumbHeight + 'px';
+                thumb.style.top = thumbTop + 'px';
+            }
+            
+            container.addEventListener('scroll', updateScrollbar);
+            window.addEventListener('resize', updateScrollbar);
+            updateScrollbar();
+        }
+
+        // --- UI & MESSAGE FUNCTIONS ---
+        function addChatMessage(message, role, images = []) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'}`;
+            const bubble = document.createElement('div');
+            bubble.className = `chat-bubble p-3 rounded-lg ${role === 'user' ? 'user-bubble' : 'ai-bubble'}`;
+            
+            if (images.length > 0) {
+                const imageGrid = document.createElement('div');
+                imageGrid.className = 'flex flex-wrap gap-2 mb-2';
+                images.forEach(imgData => {
+                    const img = document.createElement('img');
+                    img.src = imgData.base64;
+                    img.className = 'h-16 w-16 sm:h-20 sm:w-20 object-cover rounded-md';
+                    imageGrid.appendChild(img);
+                });
+                bubble.appendChild(imageGrid);
+            }
+            
+            const textPara = document.createElement('p');
+            textPara.innerHTML = message;
+            bubble.appendChild(textPara);
+            messageDiv.appendChild(bubble);
+            chatMessageContainerEl.appendChild(messageDiv);
+            chatMessageContainerEl.scrollTop = chatMessageContainerEl.scrollHeight;
+            return bubble;
+        }
+
+        function showThinkingIndicator() {
+            hideThinkingIndicator();
+            const indicatorHTML = `
+                <div class="flex justify-start" id="dynamic-thinking-indicator">
+                    <div class="ai-bubble p-3 rounded-lg">
+                        <!-- CHANGE 2: Indicator text converted to English -->
+                        <p><i class="fas fa-spinner fa-spin mr-2"></i>Insight is thinking...</p>
+                    </div>
+                </div>
+            `;
+            chatMessageContainerEl.insertAdjacentHTML('beforeend', indicatorHTML);
+            chatMessageContainerEl.scrollTop = chatMessageContainerEl.scrollHeight;
+        }
+
+        function hideThinkingIndicator() {
+            const indicator = document.getElementById('dynamic-thinking-indicator');
+            if (indicator) indicator.remove();
+        }
+
+        function renderImagePills() {
+            imagePillsContainerEl.innerHTML = '';
+            stagedImages.forEach((imgData, index) => {
+                const pill = document.createElement('div');
+                pill.className = 'image-pill';
+                pill.innerHTML = `<img src="${imgData.base64}" alt="image preview"><span>${imgData.name.substring(0, 8)}...</span><button class="remove-pill" data-index="${index}">×</button>`;
+                imagePillsContainerEl.appendChild(pill);
+            });
+            
+            imagePillsContainerEl.querySelectorAll('.remove-pill').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const indexToRemove = parseInt(e.currentTarget.dataset.index, 10);
+                    stagedImages.splice(indexToRemove, 1);
+                    renderImagePills();
+                });
+            });
+        }
+        
+        async function openDownloadPage(imageUrl, prompt, buttonElement) {
+            // CHANGE 2: Button text converted to English
+            buttonElement.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i>Preparing...`;
+            buttonElement.disabled = true;
+
+            try {
+                const response = await fetch(imageUrl);
+                if (!response.ok) throw new Error('Failed to fetch image data.');
+                const imageBlob = await response.blob();
+                const localImageUrl = URL.createObjectURL(imageBlob);
+                
+                // CHANGE 2: Download page text converted to English
+                const downloadPageHtml = `
+                    <!DOCTYPE html>
+                    <html lang="en">
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>Download Image</title>
+                        <style>
+                            body { margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background-color: #111827; color: #e5e7eb; font-family: sans-serif; padding: 20px; box-sizing: border-box; text-align: center; }
+                            img { max-width: 90%; max-height: 70vh; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+                            .download-btn { display: inline-block; margin-top: 24px; padding: 12px 24px; background-color: #4f46e5; color: white; text-decoration: none; font-weight: bold; border-radius: 8px; transition: background-color 0.2s; }
+                            .download-btn:hover { background-color: #4338ca; }
+                            .info { margin-top: 12px; font-size: 0.9em; color: #9ca3af; }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>Image Preview & Download</h1>
+                        <img src="${localImageUrl}" alt="AI Generated Image: ${prompt}">
+                        <a href="${localImageUrl}" download="insight-generated-image.png" class="download-btn">Download Image</a>
+                        <p class="info">If the button doesn't work, try long-pressing the image and selecting 'Download' or 'Save'.</p>
+                    </body>
+                    </html>
+                `;
+                const pageBlob = new Blob([downloadPageHtml], { type: 'text/html' });
+                const pageBlobUrl = URL.createObjectURL(pageBlob);
+                window.open(pageBlobUrl, '_blank');
+
+            } catch (error) {
+                console.error("Download preparation failed:", error);
+                // CHANGE 2: Alert text converted to English
+                alert("Could not prepare the image for download. Please try again.");
+            } finally {
+                // CHANGE 2: Button text converted to English
+                buttonElement.innerHTML = `<i class="fas fa-external-link-alt mr-2"></i>Open & Save`;
+                buttonElement.disabled = false;
+            }
+        }
+
+        // --- CORE LOGIC ---
+        async function handleChatSubmit() {
+            const userMessage = chatInputEl.value.trim();
+            if ((!userMessage && stagedImages.length === 0) || isProcessing) return;
+
+            const imagesForThisMessage = [...stagedImages];
+            addChatMessage(userMessage, 'user', imagesForThisMessage);
+            chatHistory.push({ role: 'user', content: userMessage });
+            
+            chatInputEl.value = '';
+            stagedImages = [];
+            renderImagePills();
+            autoResizeTextarea();
+
+            isProcessing = true;
+            showThinkingIndicator();
+            
+            try {
+                if (imagesForThisMessage.length > 0) { activeImagePrompt = null; }
+
+                const historyString = chatHistory.map(m => `${m.role}: ${m.content}`).join('\\n');
+                const prompt = MASTER_PROMPT
+                    .replace("{CHAT_HISTORY}", historyString)
+                    .replace("{ACTIVE_IMAGE_PROMPT}", activeImagePrompt || "None")
+                    .replace("{USER_MESSAGE}", userMessage);
+                
+                const parts = [{ text: prompt }];
+                imagesForThisMessage.forEach(img => {
+                    parts.push({ inline_data: { mime_type: img.mime_type, data: img.base64.split(',')[1] } });
+                });
+
+                const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MULTIMODAL_MODEL_NAME}:generateContent?key=${API_KEY}`;
+                const requestBody = { contents: [{ parts }], generationConfig: { temperature: 0.5, topP: 1, topK: 32, maxOutputTokens: 2048 } };
+                const response = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(requestBody) });
+                const responseData = await response.json();
+                
+                hideThinkingIndicator();
+
+                if (!response.ok) throw new Error(responseData.error?.message || "API request failed");
+                
+                let rawAiResponseText = responseData.candidates[0].content.parts[0].text;
+                
+                let aiResponse;
+                try {
+                    const cleanedText = rawAiResponseText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+                    aiResponse = JSON.parse(cleanedText);
+                } catch (e) {
+                    aiResponse = { text_response: rawAiResponseText, image_generation_prompt: null };
+                }
+
+                const aiBubble = addChatMessage(aiResponse.text_response, 'ai');
+                chatHistory.push({ role: 'assistant', content: aiResponse.text_response });
+
+                if (aiResponse.image_generation_prompt) {
+                    activeImagePrompt = aiResponse.image_generation_prompt;
+                    
+                    const imageWrapper = document.createElement('div');
+                    imageWrapper.className = 'chat-image-container mt-2';
+                    // CHANGE 2: Indicator text converted to English
+                    imageWrapper.innerHTML = `<div class="p-2 text-sm text-slate-400"><i class="fas fa-palette fa-spin mr-2"></i>Generating image...</div>`;
+                    aiBubble.appendChild(imageWrapper);
+                    chatMessageContainerEl.scrollTop = chatMessageContainerEl.scrollHeight;
+
+                    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(aiResponse.image_generation_prompt)}`;
+                    const img = document.createElement('img');
+                    img.src = imageUrl;
+
+                    img.onload = () => {
+                        imageWrapper.innerHTML = '';
+                        imageWrapper.appendChild(img);
+
+                        const openPageButton = document.createElement('button');
+                        openPageButton.className = 'block w-full text-center mt-2 text-indigo-400 hover:text-indigo-300 text-sm font-semibold bg-indigo-500/10 hover:bg-indigo-500/20 py-1.5 rounded-md transition-colors';
+                        // CHANGE 2: Button text converted to English
+                        openPageButton.innerHTML = `<i class="fas fa-external-link-alt mr-2"></i>Open & Save`;
+                        openPageButton.onclick = () => openDownloadPage(imageUrl, aiResponse.image_generation_prompt, openPageButton);
+                        imageWrapper.appendChild(openPageButton);
+
+                        chatMessageContainerEl.scrollTop = chatMessageContainerEl.scrollHeight;
+                    };
+                    img.onerror = () => { 
+                        // CHANGE 2: Error text converted to English
+                        imageWrapper.textContent = 'Sorry, the image could not be generated.'; 
+                        activeImagePrompt = null; 
+                    };
+                }
+
+            } catch (error) {
+                console.error("Chat Error:", error);
+                hideThinkingIndicator();
+                // CHANGE 2: Error message converted to English
+                addChatMessage(`I'm sorry, an error occurred. Please try rephrasing your request. (Error: ${error.message})`, 'ai');
+            } finally {
+                isProcessing = false;
+            }
+        }
+        
+        function handleFileSelection(files) {
+            if (!files) return;
+            for (const file of files) {
+                if (stagedImages.length >= MAX_IMAGES_PER_MSG) {
+                    // CHANGE 2: Alert text converted to English
+                    alert(`You can only attach a maximum of ${MAX_IMAGES_PER_MSG} images.`);
+                    break;
+                }
+                if (file.size > 4 * 1024 * 1024) {
+                    // CHANGE 2: Alert text converted to English
+                    alert(`Image "${file.name}" is too large (max 4MB).`);
+                    continue;
+                }
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    stagedImages.push({ base64: reader.result, mime_type: file.type, name: file.name });
+                    renderImagePills();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function autoResizeTextarea() {
+            chatInputEl.style.height = 'auto';
+            chatInputEl.style.height = (chatInputEl.scrollHeight) + 'px';
+        }
+
+        // --- EVENT LISTENERS ---
+        function init() {
+            chatSendButtonEl.addEventListener('click', handleChatSubmit);
+            chatInputEl.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleChatSubmit();
+                }
+            });
+            chatInputEl.addEventListener('input', autoResizeTextarea);
+            attachImageButtonEl.addEventListener('click', () => imageInputEl.click());
+            imageInputEl.addEventListener('change', (e) => handleFileSelection(e.target.files));
+            
+            initCustomScrollbar();
+        }
+
+        init();
     </script>
 </body>
 </html>
