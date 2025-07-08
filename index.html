@@ -134,15 +134,19 @@
     </div>
 
     <script>
-        // --- ORIGINAL INSIGHT AI CONFIGURATION & LOGIC (UNCHANGED) ---
         const API_KEY = "AIzaSyDSF270Y1VJf1fe4G8ZAuw7bOITbAlal74"; 
         const MULTIMODAL_MODEL_NAME = "gemini-2.5-flash-preview-04-17";
         const MAX_IMAGES_PER_MSG = 4;
         const STREAMING_SPEED_MS = 10;
+        
+        // MODIFICATION: Added A4F API details for image generation
+        const A4F_API_KEY = "ddc-a4f-eae251b9f298445eb27a6901f921c528";
+        const A4F_API_URL = "https://api.a4f.co/v1/images/generations";
+        const A4F_MODEL_NAME = "provider-1/FLUX.1-kontext-pro";
 
+        // MODIFICATION: Added new instruction block into the master prompt.
         const MASTER_PROMPT = `You are 'Insight', a genius-level, multi-modal AI assistant with persistent memory. You will receive the full CHAT_HISTORY, the LATEST_USER_MESSAGE, any NEWLY_UPLOADED_IMAGES, and crucially, the 'ACTIVE_IMAGE_PROMPT' which is the prompt that created the last image in the conversation. IMPORTANT: You must respond in Roman Urdu (Urdu written in English alphabet) for all conversational text. However, for image generation prompts, you must ALWAYS use English only. CRITICAL: Your entire output must be ONLY the JSON object and nothing else. Do not add any introductory text, apologies, or explanations outside of the JSON structure. Your response MUST be in a valid JSON format: { "text_response": "Your conversational reply to the user in Roman Urdu. This should be friendly, natural, and explain what you are doing if generating an image.", "image_generation_prompt": "If you decide to generate/edit an image, create a detailed, single-paragraph prompt for a text-to-image AI here IN ENGLISH ONLY. Otherwise, this MUST be null." } YOUR DECISION LOGIC: 1. **If NEWLY_UPLOADED_IMAGES exist:** Your top priority is these new images. The ACTIVE_IMAGE_PROMPT should be ignored. - If there is ONE new image and the user asks to edit it (e.g., 'make this girl's dress blue'), create an image prompt describing the edited scene. - If there are MULTIPLE new images, the user wants to compose a scene. Create a prompt that combines the subjects from all images as per their text instructions. - If the user just asks to analyze ("what is this?"), provide the analysis in 'text_response' and set 'image_generation_prompt' to null. 2. **If NO new images are attached, BUT 'ACTIVE_IMAGE_PROMPT' exists:** This means the user wants to modify the LAST image you showed them. - Your job is to be a PRECISION EDITOR. Surgically modify the 'ACTIVE_IMAGE_PROMPT' with the user's new instructions (e.g., change color, add an item). Do NOT change anything else. The original visual context is paramount. 3. **If NO new images AND NO 'ACTIVE_IMAGE_PROMPT':** This is a fresh conversation. - If the user's message is inherently visual ("show me a picture of Saturn"), create an 'image_generation_prompt'. - Otherwise, have a normal text-based conversation, keeping 'image_generation_prompt' as null. CHAT HISTORY (for context): {CHAT_HISTORY} ACTIVE IMAGE PROMPT (from last turn, if any): {ACTIVE_IMAGE_PROMPT} LATEST USER MESSAGE: "{USER_MESSAGE}"`;
 
-        // --- ELEMENT SELECTORS (ADAPTED FOR NEW UI) ---
         const chatMessageContainerEl = document.querySelector('.chat-messages-container');
         const chatInputEl = document.getElementById('chatInput');
         const chatSendButtonEl = document.getElementById('chatSendButton');
@@ -152,13 +156,11 @@
         const chatFormEl = document.getElementById('chat-form');
         const messagesEndEl = document.getElementById('messages-end');
 
-        // --- STATE VARIABLES (UNCHANGED) ---
         let stagedImages = []; 
         let chatHistory = [];
         let activeImagePrompt = null; 
         let isProcessing = false;
         
-        // --- UI & MESSAGE FUNCTIONS (ADAPTED FOR NEW UI) ---
         function scrollToBottom() {
             messagesEndEl.scrollIntoView({ behavior: 'smooth' });
         }
@@ -194,7 +196,6 @@
 
         function showThinkingIndicator() {
             hideThinkingIndicator();
-            // MODIFICATION: Removed 'w-full' from the inner div to make it shrink-to-fit content.
             const indicatorHTML = `
                 <div class="flex w-full justify-start animate-fade-in-up" id="dynamic-thinking-indicator">
                     <div class="px-4 py-3 shadow-card bg-white rounded-lg border border-slate-200">
@@ -331,27 +332,61 @@
                     activeImagePrompt = aiResponse.image_generation_prompt;
                     const imageWrapper = document.createElement('div');
                     imageWrapper.className = 'mt-3 animate-fade-in-up';
-                    // MODIFICATION: Removed icon, changed text, and added shimmer effect class.
                     imageWrapper.innerHTML = `<div class="p-2 text-sm text-center"><span class="font-medium shimmer-black-text">Generating...</span></div>`;
                     aiBubble.appendChild(imageWrapper);
                     scrollToBottom();
                     
-                    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(aiResponse.image_generation_prompt)}`;
-                    const img = document.createElement('img');
-                    img.src = imageUrl;
-                    img.className = 'w-full max-w-md h-auto rounded-lg mt-1 border border-indigo-200 bg-gray-100';
+                    try {
+                        const imageGenResponse = await fetch(A4F_API_URL, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "Authorization": `Bearer ${A4F_API_KEY}`
+                            },
+                            body: JSON.stringify({
+                                model: A4F_MODEL_NAME,
+                                prompt: aiResponse.image_generation_prompt,
+                                n: 1,
+                                size: "1024x1024"
+                            })
+                        });
 
-                    img.onload = () => {
-                        imageWrapper.innerHTML = '';
-                        imageWrapper.appendChild(img);
-                        const openPageButton = document.createElement('button');
-                        openPageButton.className = 'block w-full text-center mt-2 text-indigo-700 text-sm font-semibold bg-indigo-100 hover:bg-indigo-200 py-1.5 rounded-md transition-colors';
-                        openPageButton.innerHTML = `<i class="fas fa-external-link-alt mr-2"></i>Open & Save`;
-                        openPageButton.onclick = () => openDownloadPage(imageUrl, aiResponse.image_generation_prompt, openPageButton);
-                        imageWrapper.appendChild(openPageButton);
-                        scrollToBottom();
-                    };
-                    img.onerror = () => { imageWrapper.textContent = 'Sorry, the image could not be generated.'; activeImagePrompt = null; };
+                        if (!imageGenResponse.ok) {
+                            const errorData = await imageGenResponse.json();
+                            throw new Error(errorData.error?.message || `Image generation failed with status ${imageGenResponse.status}`);
+                        }
+
+                        const imageData = await imageGenResponse.json();
+                        const imageUrl = imageData.data && imageData.data[0] ? imageData.data[0].url : null;
+
+                        if (!imageUrl) {
+                            throw new Error("Image URL not found in API response.");
+                        }
+
+                        const img = document.createElement('img');
+                        img.src = imageUrl;
+                        img.className = 'w-full max-w-md h-auto rounded-lg mt-1 border border-indigo-200 bg-gray-100';
+
+                        img.onload = () => {
+                            imageWrapper.innerHTML = '';
+                            imageWrapper.appendChild(img);
+                            const openPageButton = document.createElement('button');
+                            openPageButton.className = 'block w-full text-center mt-2 text-indigo-700 text-sm font-semibold bg-indigo-100 hover:bg-indigo-200 py-1.5 rounded-md transition-colors';
+                            openPageButton.innerHTML = `<i class="fas fa-external-link-alt mr-2"></i>Open & Save`;
+                            openPageButton.onclick = () => openDownloadPage(imageUrl, aiResponse.image_generation_prompt, openPageButton);
+                            imageWrapper.appendChild(openPageButton);
+                            scrollToBottom();
+                        };
+                        img.onerror = () => {
+                            imageWrapper.textContent = 'Sorry, the generated image could not be loaded.';
+                            activeImagePrompt = null;
+                        };
+
+                    } catch (genError) {
+                        console.error("Image Generation Error:", genError);
+                        imageWrapper.textContent = `Sorry, the image could not be generated. (Error: ${genError.message})`;
+                        activeImagePrompt = null;
+                    }
                 }
             } catch (error) {
                 console.error("Chat Error:", error);
