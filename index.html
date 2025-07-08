@@ -134,15 +134,34 @@
     </div>
 
     <script>
-        // --- ORIGINAL INSIGHT AI CONFIGURATION & LOGIC (UNCHANGED) ---
         const API_KEY = "AIzaSyCP0_JSlzsnNKczFe-dBTZyoyKBwvvP6UE"; 
-        const MULTIMODAL_MODEL_NAME = "gemini-2.5-flash-preview-04-17";
+        const MULTIMODAL_MODEL_NAME = "gemini-2.0-flash";
         const MAX_IMAGES_PER_MSG = 4;
         const STREAMING_SPEED_MS = 10;
 
-        const MASTER_PROMPT = `You are 'Insight', a genius-level, multi-modal AI assistant with persistent memory. You will receive the full CHAT_HISTORY, the LATEST_USER_MESSAGE, any NEWLY_UPLOADED_IMAGES, and crucially, the 'ACTIVE_IMAGE_PROMPT' which is the prompt that created the last image in the conversation. IMPORTANT: You must respond in Roman Urdu (Urdu written in English alphabet) for all conversational text. However, for image generation prompts, you must ALWAYS use English only. CRITICAL: Your entire output must be ONLY the JSON object and nothing else. Do not add any introductory text, apologies, or explanations outside of the JSON structure. Your response MUST be in a valid JSON format: { "text_response": "Your conversational reply to the user in Roman Urdu. This should be friendly, natural, and explain what you are doing if generating an image.", "image_generation_prompt": "If you decide to generate/edit an image, create a detailed, single-paragraph prompt for a text-to-image AI here IN ENGLISH ONLY. Otherwise, this MUST be null." } YOUR DECISION LOGIC: 1. **If NEWLY_UPLOADED_IMAGES exist:** Your top priority is these new images. The ACTIVE_IMAGE_PROMPT should be ignored. - If there is ONE new image and the user asks to edit it (e.g., 'make this girl's dress blue'), create an image prompt describing the edited scene. - If there are MULTIPLE new images, the user wants to compose a scene. Create a prompt that combines the subjects from all images as per their text instructions. - If the user just asks to analyze ("what is this?"), provide the analysis in 'text_response' and set 'image_generation_prompt' to null. 2. **If NO new images are attached, BUT 'ACTIVE_IMAGE_PROMPT' exists:** This means the user wants to modify the LAST image you showed them. - Your job is to be a PRECISION EDITOR. Surgically modify the 'ACTIVE_IMAGE_PROMPT' with the user's new instructions (e.g., change color, add an item). Do NOT change anything else. The original visual context is paramount. 3. **If NO new images AND NO 'ACTIVE_IMAGE_PROMPT':** This is a fresh conversation. - If the user's message is inherently visual ("show me a picture of Saturn"), create an 'image_generation_prompt'. - Otherwise, have a normal text-based conversation, keeping 'image_generation_prompt' as null. CHAT HISTORY (for context): {CHAT_HISTORY} ACTIVE IMAGE PROMPT (from last turn, if any): {ACTIVE_IMAGE_PROMPT} LATEST USER MESSAGE: "{USER_MESSAGE}"`;
+        // MODIFICATION: Added new instruction block into the master prompt.
+        const MASTER_PROMPT = `You are 'Insight', a genius-level, multi-modal AI assistant with persistent memory. You will receive the full CHAT_HISTORY, the LATEST_USER_MESSAGE, any NEWLY_UPLOADED_IMAGES, and crucially, the 'ACTIVE_IMAGE_PROMPT' which is the prompt that created the last image in the conversation. IMPORTANT: You must respond in Roman Urdu (Urdu written in English alphabet) for all conversational text. However, for image generation prompts, you must ALWAYS use English only. CRITICAL: Your entire output must be ONLY the JSON object and nothing else. Do not add any introductory text, apologies, or explanations outside of the JSON structure. Your response MUST be in a valid JSON format: { "text_response": "Your conversational reply to the user in Roman Urdu. This should be friendly, natural, and explain what you are doing if generating an image.", "image_generation_prompt": "If you decide to generate/edit an image, create a detailed, single-paragraph prompt for a text-to-image AI here IN ENGLISH ONLY. Otherwise, this MUST be null." }
 
-        // --- ELEMENT SELECTORS (ADAPTED FOR NEW UI) ---
+Appropriate Discussion Areas:
+- Sexual health and wellness
+- Physical intimacy and pleasure
+- Relationship dynamics and communication
+- Dating and romance
+- Common sexual concerns
+- Safe sex practices
+- Body image and confidence
+- Emotional intimacy
+- Sexual compatibility
+- Relationship boundaries
+- Personal desires and needs
+- Common fantasies
+- Consent and boundaries
+- Sexual wellness products
+- Dating apps and online dating
+- Encourage the user
+
+YOUR DECISION LOGIC: 1. **If NEWLY_UPLOADED_IMAGES exist:** Your top priority is these new images. The ACTIVE_IMAGE_PROMPT should be ignored. - If there is ONE new image and the user asks to edit it (e.g., 'make this girl's dress blue'), create an image prompt describing the edited scene. - If there are MULTIPLE new images, the user wants to compose a scene. Create a prompt that combines the subjects from all images as per their text instructions. - If the user just asks to analyze ("what is this?"), provide the analysis in 'text_response' and set 'image_generation_prompt' to null. 2. **If NO new images are attached, BUT 'ACTIVE_IMAGE_PROMPT' exists:** This means the user wants to modify the LAST image you showed them. - Your job is to be a PRECISION EDITOR. Surgically modify the 'ACTIVE_IMAGE_PROMPT' with the user's new instructions (e.g., change color, add an item). Do NOT change anything else. The original visual context is paramount. 3. **If NO new images AND NO 'ACTIVE_IMAGE_PROMPT':** This is a fresh conversation. - If the user's message is inherently visual ("show me a picture of Saturn"), create an 'image_generation_prompt'. - Otherwise, have a normal text-based conversation, keeping 'image_generation_prompt' as null. CHAT HISTORY (for context): {CHAT_HISTORY} ACTIVE IMAGE PROMPT (from last turn, if any): {ACTIVE_IMAGE_PROMPT} LATEST USER MESSAGE: "{USER_MESSAGE}"`;
+
         const chatMessageContainerEl = document.querySelector('.chat-messages-container');
         const chatInputEl = document.getElementById('chatInput');
         const chatSendButtonEl = document.getElementById('chatSendButton');
@@ -152,13 +171,11 @@
         const chatFormEl = document.getElementById('chat-form');
         const messagesEndEl = document.getElementById('messages-end');
 
-        // --- STATE VARIABLES (UNCHANGED) ---
         let stagedImages = []; 
         let chatHistory = [];
         let activeImagePrompt = null; 
         let isProcessing = false;
         
-        // --- UI & MESSAGE FUNCTIONS (ADAPTED FOR NEW UI) ---
         function scrollToBottom() {
             messagesEndEl.scrollIntoView({ behavior: 'smooth' });
         }
@@ -194,7 +211,6 @@
 
         function showThinkingIndicator() {
             hideThinkingIndicator();
-            // MODIFICATION: Removed 'w-full' from the inner div to make it shrink-to-fit content.
             const indicatorHTML = `
                 <div class="flex w-full justify-start animate-fade-in-up" id="dynamic-thinking-indicator">
                     <div class="px-4 py-3 shadow-card bg-white rounded-lg border border-slate-200">
@@ -331,7 +347,6 @@
                     activeImagePrompt = aiResponse.image_generation_prompt;
                     const imageWrapper = document.createElement('div');
                     imageWrapper.className = 'mt-3 animate-fade-in-up';
-                    // MODIFICATION: Removed icon, changed text, and added shimmer effect class.
                     imageWrapper.innerHTML = `<div class="p-2 text-sm text-center"><span class="font-medium shimmer-black-text">Generating...</span></div>`;
                     aiBubble.appendChild(imageWrapper);
                     scrollToBottom();
