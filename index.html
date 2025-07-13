@@ -3,14 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AlphaGPT (Report Style)</title>
+    <title>AlphaGPT</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
         theme: {
           extend: {
             colors: {
-              // --- Original AlphaGPT colors (mostly unused for markdown now) ---
               'brand-primary': 'rgb(var(--brand-primary) / <alpha-value>)',      
               'brand-secondary': 'rgb(var(--brand-secondary) / <alpha-value>)',  
               'surface-main': 'rgb(var(--surface-main) / <alpha-value>)',       
@@ -26,8 +25,8 @@
               'text-on-primary': 'rgb(var(--text-on-primary) / <alpha-value>)',
               'text-subtle': 'rgb(var(--text-subtle) / <alpha-value>)',
               'text-button-icon': 'rgb(var(--text-button-icon) / <alpha-value>)',
-              'link-blue': '#4A90E2', // Changed to match report
-              'link-blue-hover': '#357ABD', // Changed to match report
+              'link-blue': '#0000FF', 
+              'link-blue-hover': '#0000CC', 
               'border-default': 'rgb(var(--border-default) / <alpha-value>)',
               'border-light': 'rgb(var(--border-light) / <alpha-value>)',
               'border-medium': 'rgb(var(--border-medium) / <alpha-value>)',
@@ -40,18 +39,14 @@
               'error-fg': 'rgb(var(--error-fg) / <alpha-value>)',
               'brand-send-active': '#D77655',
               'brand-send-hover': '#BE6241', 
-              // --- Colors for Report Style ---
-              'report-primary': '#4A90E2',
-              'report-neutral-50': '#F9FAFB',
-              'report-neutral-100': '#F3F4F6',
-              'report-neutral-200': '#E5E7EB',
-              'report-neutral-300': '#D1D5DB',
-              'report-neutral-700': '#374151',
-              'report-neutral-800': '#1F2937',
-              'report-neutral-900': '#111827',
             },
             fontFamily: {
               sans: ['Inter', 'sans-serif'], poppins: ['Poppins', 'sans-serif'], roboto: ['Roboto', 'sans-serif'],
+              serif: ['Georgia', 'Cambria', '"Times New Roman"', 'Times', 'serif'], outfit: ['Outfit', 'sans-serif'],
+              lato: ['Lato', 'sans-serif'], 'open-sans': ['"Open Sans"', 'sans-serif'], montserrat: ['Montserrat', 'sans-serif'],
+              'source-sans-pro': ['"Source Sans Pro"', 'sans-serif'], nunito: ['Nunito', 'sans-serif'], raleway: ['Raleway', 'sans-serif'],
+              merriweather: ['Merriweather', 'serif'], 'playfair-display': ['"Playfair Display"', 'serif'],
+              ubuntu: ['Ubuntu', 'sans-serif'], 'josefin-sans': ['"Josefin Sans"', 'sans-serif'],
             },
             animation: {
               'fade-in-up': 'fadeInUp 0.5s ease-out forwards', 'scale-in-subtle': 'scaleInSubtle 0.35s ease-out forwards',
@@ -112,6 +107,7 @@
         }
         html, body, #root { @apply h-full overflow-hidden bg-surface-main; }
         body { @apply font-sans text-text-primary m-0; }
+        /* Removed custom ::selection style to use browser default */
       }
       @layer components {
         .shimmer-gradient-text {
@@ -119,55 +115,31 @@
           background-image: linear-gradient(100deg, #8b5cf6, #ec4899, #3b82f6, #8b5cf6);
           background-size: 250% auto;
         }
-
-        /* === START: DEEP AGENT REPORT STYLES === */
-        .markdown-content { @apply font-sans; } /* Use Inter font */
-        
-        .markdown-content p { @apply mb-5 leading-relaxed text-base text-report-neutral-700; }
-        
-        .markdown-content ul, .markdown-content ol { @apply list-inside mb-5 pl-4 space-y-2 text-base; }
-        .markdown-content ul { @apply list-disc; }
-        .markdown-content ol { @apply list-decimal; }
-        .markdown-content li { @apply mb-2; }
-
-        .markdown-content strong, .markdown-content b { @apply font-semibold text-report-neutral-900; }
+        .markdown-content { @apply font-normal font-sans text-text-secondary; }
+        .markdown-content p { @apply mb-3 last:mb-0 text-base font-normal; } 
+        .markdown-content ul, .markdown-content ol { @apply list-inside mb-3 pl-4 text-base; } 
+        .markdown-content ul { @apply list-disc; } .markdown-content ul ul { @apply list-[circle] ml-4;}
+        .markdown-content ol { @apply list-decimal; } .markdown-content ol ol { @apply list-[lower-alpha] ml-4;}
+        .markdown-content li { @apply mb-1.5 text-base; }
+        .markdown-content strong, .markdown-content b { @apply font-semibold text-text-primary; } 
         .markdown-content em, .markdown-content i { @apply italic; }
-
-        /* Inline code, light theme to match report style */
-        .markdown-content code:not(pre code) { 
-          @apply bg-report-neutral-200 text-report-neutral-800 text-sm px-1.5 py-1 rounded font-mono shadow-none border-none; 
-        }
-
-        /* Code block, DARK THEME to match report style */
-        .markdown-content pre { 
-          @apply bg-report-neutral-800 text-report-neutral-100 rounded-lg overflow-x-auto my-4 font-mono relative p-4; 
-        }
-        .markdown-content pre code { @apply bg-transparent text-inherit p-0 shadow-none border-none !whitespace-pre; }
-
-        .markdown-content a { @apply text-link-blue hover:text-link-blue-hover underline; }
-        
-        .markdown-content blockquote { @apply border-l-4 border-report-primary bg-report-neutral-50 p-4 my-6 italic text-report-neutral-700; }
-
-        /* Headings with report style (font, size, color, borders) */
-        .markdown-content h1, .markdown-content h2, .markdown-content h3, .markdown-content h4, .markdown-content h5, .markdown-content h6 { @apply font-sans font-bold leading-tight; } /* Reset to Inter font */
-        .markdown-content h1 { @apply text-3xl text-report-neutral-900 mb-6 pb-2 border-b border-report-neutral-200; }
-        .markdown-content h2 { @apply text-2xl text-report-neutral-800 mt-8 mb-4 pb-1 border-b border-report-neutral-200; }
-        .markdown-content h3 { @apply text-xl font-semibold text-report-neutral-800 mt-6 mb-3; }
-        .markdown-content h4 { @apply text-lg font-semibold text-report-neutral-800; }
-        .markdown-content h5 { @apply text-base font-semibold text-report-neutral-800; }
-        .markdown-content h6 { @apply text-sm font-semibold text-report-neutral-800; }
-
-        .markdown-content hr { @apply my-6 border-report-neutral-200; }
-        
-        /* Table with report style */
-        .markdown-content table { @apply w-full my-6 border-collapse text-base; }
-        .markdown-content th, .markdown-content td { @apply border border-report-neutral-300 p-3 text-left; }
-        .markdown-content th { @apply bg-report-neutral-100 font-semibold text-report-neutral-800; }
-        .markdown-content td { @apply text-report-neutral-700; }
-        .markdown-content tbody tr:nth-child(even) { @apply bg-white; } /* Remove alternating row color */
-
-        /* === END: DEEP AGENT REPORT STYLES === */
-        
+        .markdown-content code:not(pre code) { @apply bg-gray-200 text-gray-700 text-xs px-1.5 py-0.5 rounded-md font-mono shadow-sm border border-gray-300; } 
+        .markdown-content pre { @apply bg-gray-50 text-gray-800 text-sm rounded-lg overflow-x-auto my-4 font-mono relative border border-gray-300; } 
+        .markdown-content pre code { @apply block bg-transparent text-inherit p-0 shadow-none border-none px-4 pb-4 pt-8 !whitespace-pre; }
+        .markdown-content pre::-webkit-scrollbar { width: 0px; height: 0px; } 
+        .markdown-content pre { scrollbar-width: none; } 
+        .markdown-content a { @apply text-link-blue hover:text-link-blue-hover underline decoration-link-blue/50 hover:decoration-link-blue-hover/50 transition-colors; } 
+        .markdown-content blockquote { @apply border-l-4 border-brand-primary/60 bg-brand-primary/10 pl-4 py-2 my-4 italic text-base; } 
+        .markdown-content h1, .markdown-content h2, .markdown-content h3, .markdown-content h4, .markdown-content h5, .markdown-content h6 { @apply font-poppins my-4 text-text-primary leading-tight; }
+        .markdown-content h1 { @apply text-2xl font-bold; } .markdown-content h2 { @apply text-xl font-semibold; }
+        .markdown-content h3 { @apply text-lg font-semibold; } .markdown-content h4 { @apply text-base font-semibold; }
+        .markdown-content h5 { @apply text-sm font-semibold; } .markdown-content h6 { @apply text-xs font-semibold; }
+        .markdown-content hr { @apply my-6 border-border-default; }
+        .markdown-content table { @apply block max-w-full my-4 border-collapse text-xs shadow-sm rounded-lg overflow-x-auto; scrollbar-width: none; }
+        .markdown-content table::-webkit-scrollbar { width: 0px; height: 0px; } 
+        .markdown-content th, .markdown-content td { @apply border border-border-default p-2 text-left; } 
+        .markdown-content th { @apply bg-surface-accent font-semibold text-text-primary; }
+        .markdown-content td { @apply text-text-secondary; } .markdown-content tbody tr:nth-child(even) { @apply bg-gray-50/50; }
         .chat-messages-container::-webkit-scrollbar { width: 0px; } 
         .chat-messages-container { scrollbar-width: none; } 
         
@@ -185,10 +157,9 @@
       }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com"> <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700;800&family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet"> 
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700;800&family=Roboto:wght@400;500;700;900&family=Outfit:wght@400;700&family=Lato:wght@400;700&family=Open+Sans:wght@400;700&family=Montserrat:wght@400;700&family=Source+Sans+Pro:wght@400;500;600;700&family=Nunito:wght@400;700&family=Raleway:wght@400;700&family=Merriweather:wght@400;700&family=Playfair+Display:wght@400;700&family=Ubuntu:wght@400;700&family=Josefin+Sans:wght@400;700&display=swap" rel="stylesheet"> 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <!-- Use a dark theme for highlight.js to match the dark code blocks -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-light.min.css">
 
     <script type="importmap">
       {
@@ -208,7 +179,6 @@
       import { marked } from 'marked';
       import hljs from 'highlight.js';
 
-      // --- NO CHANGES to renderer or other JS logic below, only to styles ---
       const renderer = new marked.Renderer();
       renderer.link = (href, title, text) => { 
         const external = href && (href.startsWith('http://') || href.startsWith('https://'));
@@ -218,9 +188,9 @@
       };
       marked.setOptions({ gfm: true, breaks: true, smartypants: true, renderer });
       
-      const A4F_API_KEY = 'ddc-a4f-eae251b9f298445eb27a6901f921c528'; // Replace with your key
+      const A4F_API_KEY = 'ddc-a4f-eae251b9f298445eb27a6901f921c528';
       const A4F_BASE_URL = 'https://api.a4f.co/v1/chat/completions';
-      const TAVILY_API_KEY = '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'; // Replace with your key
+      const TAVILY_API_KEY = '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';
       
       const MODELS = [
           { id: 'provider-5/gpt-4.1-nano', uiName: 'Fast', supportsVision: true },
@@ -374,9 +344,9 @@ Your goal is to be a helpful, knowledgeable, and entertaining friend. Make every
                     let button = preEl.querySelector('.code-copy-button');
                     if (!button) {  button = document.createElement('button'); 
                         button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3.5 h-3.5"><path d="M20 2H10c-1.103 0-2 .897-2 2v4H4c-1.103 0-2 .897-2 2v10c0 1.103.897 2 2 2h10c1.103 0 2-.897 2-2v-4h4c1.103 0 2-.897 2-2V4c0-1.103-.897-2-2-2zM4 20V10h10l.002 10H4zm16-6h-4v-4c0-1.103-.897-2-2-2h-4V4h10v10z"></path></svg>`; 
-                        button.classList.add( 'code-copy-button', 'absolute', 'p-1.5', 'bg-gray-700', 'hover:bg-gray-600', 'text-gray-200', 'hover:text-white', 'border', 'border-gray-500', 'rounded-md', 'transition-colors', 'duration-150', 'opacity-80', 'hover:opacity-100' );
+                        button.classList.add( 'code-copy-button', 'absolute', 'p-1.5', 'bg-gray-100', 'hover:bg-gray-200', 'text-gray-600', 'hover:text-gray-800', 'border', 'border-gray-300', 'rounded-md', 'transition-colors', 'duration-150', 'opacity-80', 'hover:opacity-100' );
                         button.style.top = '0.35rem'; button.style.right = '0.35rem'; button.style.zIndex = '10'; button.setAttribute('aria-label', 'Copy code');
-                        button.onclick = () => { if (codeElement) { navigator.clipboard.writeText(codeElement.textContent || '').then(() => { button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3.5 h-3.5"><path d="M20.285 2l-11.285 11.567-5.286-5.011-3.714 3.716 9 8.728 15-15.285z"></path></svg>`; button.classList.add('text-green-400'); button.classList.remove('text-gray-200'); setTimeout(() => { button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3.5 h-3.5"><path d="M20 2H10c-1.103 0-2 .897-2 2v4H4c-1.103 0-2 .897-2 2v10c0 1.103.897 2 2 2h10c1.103 0 2-.897 2-2v-4h4c1.103 0 2-.897 2-2V4c0-1.103-.897-2-2-2zM4 20V10h10l.002 10H4zm16-6h-4v-4c0-1.103-.897-2-2-2h-4V4h10v10z"></path></svg>`; button.classList.remove('text-green-400'); button.classList.add('text-gray-200'); }, 2000); }).catch(err => console.error('Failed to copy: ', err)); } };
+                        button.onclick = () => { if (codeElement) { navigator.clipboard.writeText(codeElement.textContent || '').then(() => { button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3.5 h-3.5"><path d="M20.285 2l-11.285 11.567-5.286-5.011-3.714 3.716 9 8.728 15-15.285z"></path></svg>`; button.classList.add('text-green-500'); button.classList.remove('text-gray-600', 'hover:text-gray-800'); setTimeout(() => { button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3.5 h-3.5"><path d="M20 2H10c-1.103 0-2 .897-2 2v4H4c-1.103 0-2 .897-2 2v10c0 1.103.897 2 2 2h10c1.103 0 2-.897 2-2v-4h4c1.103 0 2-.897 2-2V4c0-1.103-.897-2-2-2zM4 20V10h10l.002 10H4zm16-6h-4v-4c0-1.103-.897-2-2-2h-4V4h10v10z"></path></svg>`; button.classList.remove('text-green-500'); button.classList.add('text-gray-600', 'hover:text-gray-800'); }, 2000); }).catch(err => console.error('Failed to copy: ', err)); } };
                         if (preEl.parentNode) { preEl.parentNode.insertBefore(wrapper, preEl); wrapper.appendChild(preEl); wrapper.appendChild(button); }
                     }
                     if (codeElement && !codeElement.dataset.highlighted) { hljs.highlightElement(codeElement); codeElement.dataset.highlighted = 'true'; }
@@ -388,15 +358,15 @@ Your goal is to be a helpful, knowledgeable, and entertaining friend. Make every
             const systemText = message.text || (message.parts?.[0]?.text || ""); const systemMessageStyle = isError ? "px-4 py-2 text-xs text-red-700 bg-red-100 border border-red-300 rounded-full shadow-sm italic" : "px-4 py-2 text-xs text-text-subtle bg-surface-accent border border-border-light rounded-full shadow-sm italic"; 
             return (<div className="flex justify-center my-4"><div className={systemMessageStyle}>{isError ? <><i className="fas fa-exclamation-triangle mr-1.5"></i> {systemText}</> : systemText }</div></div>);
           }
-          // --- MODIFICATION: Increased padding for a more "report-like" feel ---
-          let bubbleBaseClasses = 'px-5 py-4 md:px-6 md:py-5 relative'; let bubbleRoleClasses = ''; let bubbleWidthClasses = ''; let contentToShow = null;
+          let bubbleBaseClasses = 'p-6 relative'; // <-- UPDATED PADDING
+          let bubbleRoleClasses = ''; let bubbleWidthClasses = ''; let contentToShow = null;
           const messageTextContent = (message.parts && message.parts[0] && typeof message.parts[0].text === 'string' ? message.parts[0].text : (typeof message.text === 'string' ? message.text : ""));
           if (isUser) { 
             bubbleRoleClasses = 'bg-surface-user-bubble-bg text-text-primary rounded-xl rounded-br-md'; bubbleWidthClasses = 'max-w-[80%] sm:max-w-[75%]'; 
             const userFilesToDisplay = message.attachedFiles || (message.uiOnlyAttachedFiles || []);
             contentToShow = ( <> {userFilesToDisplay && userFilesToDisplay.length > 0 && ( <div className={`grid gap-1 ${messageTextContent ? 'mb-1.5' : ''} ${userFilesToDisplay.filter(f => f.type?.startsWith('image/')).length > 1 ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-1'}`}> {userFilesToDisplay.map((file, index) => { if (file.type?.startsWith('image/') && file.apiData?.data && file.apiData?.mimeType) { const imageSrc = `data:${file.apiData.mimeType};base64,${file.apiData.data}`; return ( <div key={file.id || file.name + index} className="rounded-lg overflow-hidden group relative max-w-full w-full"> <img src={imageSrc} alt={file.name || 'image preview'} className="block w-full max-h-60 object-contain rounded-lg" /> </div> ); } else if (file.type?.startsWith('text/')) { return ( <div key={file.id || file.name + index} className="bg-brand-primary/10 border border-brand-primary/20 p-2 rounded-lg text-xs flex items-center space-x-2 max-w-full w-fit shadow-sm my-1"> <FileTextIcon className="text-brand-primary text-sm" /> <span className="truncate max-w-[120px] sm:max-w-[150px] text-text-primary font-medium"> {file.name} </span> </div> ); } return null; })} </div> )} {messageTextContent && <p className="text-base font-normal whitespace-pre-wrap break-words">{messageTextContent}</p>} </> );
           } else if (message.role === 'model') { 
-              bubbleRoleClasses = `bg-white text-text-secondary rounded-xl border border-report-neutral-200 shadow-sm`; // Use report border and shadow
+              bubbleRoleClasses = `bg-white text-text-secondary rounded-lg border border-gray-200 shadow-sm`; // <-- UPDATED STYLES
               bubbleWidthClasses = 'max-w-full w-full'; 
 
               if (message.showSourcesOnly) {
@@ -404,7 +374,7 @@ Your goal is to be a helpful, knowledgeable, and entertaining friend. Make every
               }
 
               if(isError) { 
-                  bubbleRoleClasses = `bg-red-50 border border-red-300 text-red-700 rounded-xl`; 
+                  bubbleRoleClasses = `bg-red-50 border border-red-300 text-red-700 rounded-lg shadow-sm`; // <-- UPDATED STYLES FOR ERROR
                   const errorContent = typeof message.finalAnswerText === 'string' && message.finalAnswerText ? message.finalAnswerText : messageTextContent;
                   contentToShow = ( <div className="text-sm break-words"> <div className="flex items-center mb-1"><i className="fas fa-exclamation-triangle text-red-500 mr-2"></i><strong className="font-semibold">Error</strong></div>{errorContent.replace(/^Error:\s*/, '')} </div>); 
               
@@ -448,7 +418,6 @@ Your goal is to be a helpful, knowledgeable, and entertaining friend. Make every
       };
       
       const ChatInterface = ({ messages, onSendMessage, isLoading, onStopGeneration, onRegenerateLastTextMessage, onNewChat, setChatError, currentChatId, onDeleteAiMessagePair, selectedUserMessageId, setSelectedUserMessageId, editingMessageId, editText, setEditText, onSaveEdit, onCancelEdit, onStartEdit, selectedModel, setSelectedModel, setToast }) => { 
-          // This component's JS logic remains unchanged
           const [inputText, setInputText] = useState(''); const [selectedFiles, setSelectedFiles] = useState([]);
           const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
           const modelSelectorRef = useRef(null);
@@ -730,7 +699,6 @@ Your goal is to be a helpful, knowledgeable, and entertaining friend. Make every
       };
       
       const App = () => { 
-          // --- App Logic (unchanged) ---
           const [currentUser, setCurrentUser] = useState({ uid: 'guest_user', email: 'Guest User' }); const [authLoading, setAuthLoading] = useState(false); const [chatMessages, setChatMessages] = useState([]); const [isChatLoading, setIsChatLoading] = useState(false); const [chatError, setChatError] = useState(null); const [currentChatId, setCurrentChatId] = useState('session_chat_init');
           const [selectedUserMessageId, setSelectedUserMessageId] = useState(null);
           const [editingMessageId, setEditingMessageId] = useState(null);
