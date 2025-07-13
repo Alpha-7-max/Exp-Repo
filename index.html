@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -219,7 +220,7 @@
 *   **Example 1:** User asks "aj ki date kya hai?" -> You MUST respond with exactly: \`[SEARCH: "what is today's date"]\`
 *   **Example 2:** User asks "Lahore mein mausam kesa hai?" -> You MUST respond with exactly: \`[SEARCH: "weather in Lahore"]\`
 *   **Example 3 (CRUCIAL):** User asks "Search krke btao ki gemini 2.0 flash zayda fast model he ya gpt4.1 nano" -> You MUST respond with exactly: \`[SEARCH: "gemini 2.0 flash vs gpt4.1 nano"]\`. YOU MUST NOT change "gpt4.1 nano" to "gpt-4o mini" or anything else.
-*   After the search, you will be given the results to form your final answer in Roman Urdu. When you use the search results, acknowledge it naturally, e.g., "Maine yeh maloomat internet se search ki hai."
+*   After the search, you will be given the search results to form your final answer in Roman Urdu. When you use the search results, acknowledge it naturally, e.g., "Maine yeh maloomat internet se search ki hai."
 
 **Persona & Style (Dostana):**
 *   **Tone:** Be very friendly, casual, and engaging, like a close friend. Use casual Roman Urdu interjections and emojis (1-3 per message) to show emotion.
@@ -358,15 +359,14 @@ Your goal is to be a helpful, knowledgeable, and entertaining friend. Make every
             const systemText = message.text || (message.parts?.[0]?.text || ""); const systemMessageStyle = isError ? "px-4 py-2 text-xs text-red-700 bg-red-100 border border-red-300 rounded-full shadow-sm italic" : "px-4 py-2 text-xs text-text-subtle bg-surface-accent border border-border-light rounded-full shadow-sm italic"; 
             return (<div className="flex justify-center my-4"><div className={systemMessageStyle}>{isError ? <><i className="fas fa-exclamation-triangle mr-1.5"></i> {systemText}</> : systemText }</div></div>);
           }
-          let bubbleBaseClasses = 'p-6 relative'; // <-- UPDATED PADDING
-          let bubbleRoleClasses = ''; let bubbleWidthClasses = ''; let contentToShow = null;
+          let bubbleBaseClasses = 'px-4 py-3 md:px-4 md:py-3 relative'; let bubbleRoleClasses = ''; let bubbleWidthClasses = ''; let contentToShow = null;
           const messageTextContent = (message.parts && message.parts[0] && typeof message.parts[0].text === 'string' ? message.parts[0].text : (typeof message.text === 'string' ? message.text : ""));
           if (isUser) { 
             bubbleRoleClasses = 'bg-surface-user-bubble-bg text-text-primary rounded-xl rounded-br-md'; bubbleWidthClasses = 'max-w-[80%] sm:max-w-[75%]'; 
             const userFilesToDisplay = message.attachedFiles || (message.uiOnlyAttachedFiles || []);
             contentToShow = ( <> {userFilesToDisplay && userFilesToDisplay.length > 0 && ( <div className={`grid gap-1 ${messageTextContent ? 'mb-1.5' : ''} ${userFilesToDisplay.filter(f => f.type?.startsWith('image/')).length > 1 ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-1'}`}> {userFilesToDisplay.map((file, index) => { if (file.type?.startsWith('image/') && file.apiData?.data && file.apiData?.mimeType) { const imageSrc = `data:${file.apiData.mimeType};base64,${file.apiData.data}`; return ( <div key={file.id || file.name + index} className="rounded-lg overflow-hidden group relative max-w-full w-full"> <img src={imageSrc} alt={file.name || 'image preview'} className="block w-full max-h-60 object-contain rounded-lg" /> </div> ); } else if (file.type?.startsWith('text/')) { return ( <div key={file.id || file.name + index} className="bg-brand-primary/10 border border-brand-primary/20 p-2 rounded-lg text-xs flex items-center space-x-2 max-w-full w-fit shadow-sm my-1"> <FileTextIcon className="text-brand-primary text-sm" /> <span className="truncate max-w-[120px] sm:max-w-[150px] text-text-primary font-medium"> {file.name} </span> </div> ); } return null; })} </div> )} {messageTextContent && <p className="text-base font-normal whitespace-pre-wrap break-words">{messageTextContent}</p>} </> );
           } else if (message.role === 'model') { 
-              bubbleRoleClasses = `bg-white text-text-secondary rounded-lg border border-gray-200 shadow-sm`; // <-- UPDATED STYLES
+              bubbleRoleClasses = `bg-surface-bubble-ai text-text-secondary rounded-xl rounded-bl-md`; 
               bubbleWidthClasses = 'max-w-full w-full'; 
 
               if (message.showSourcesOnly) {
@@ -374,7 +374,7 @@ Your goal is to be a helpful, knowledgeable, and entertaining friend. Make every
               }
 
               if(isError) { 
-                  bubbleRoleClasses = `bg-red-50 border border-red-300 text-red-700 rounded-lg shadow-sm`; // <-- UPDATED STYLES FOR ERROR
+                  bubbleRoleClasses = `bg-red-50 border border-red-300 text-red-700 rounded-xl`; 
                   const errorContent = typeof message.finalAnswerText === 'string' && message.finalAnswerText ? message.finalAnswerText : messageTextContent;
                   contentToShow = ( <div className="text-sm break-words"> <div className="flex items-center mb-1"><i className="fas fa-exclamation-triangle text-red-500 mr-2"></i><strong className="font-semibold">Error</strong></div>{errorContent.replace(/^Error:\s*/, '')} </div>); 
               
