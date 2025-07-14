@@ -57,8 +57,8 @@
               'modal-fade-in': 'modal-fade-in 0.3s ease-out forwards', 
               'modal-fade-out': 'modal-fade-out 0.3s ease-in forwards', 
               'spin-continuous': 'spinContinuous 2s linear infinite',
-              'shimmer-animation': 'shimmer-animation 3s linear infinite',
-              'dot-blink-animation': 'dot-blink 1s infinite alternate', // New animation for the dot
+              'shimmer-animation': 'shimmer-animation var(--shimmer-duration) linear infinite',
+              'cursor-blink': 'cursor-blink 1.2s infinite steps(1)', 
             },
             keyframes: {
               fadeInUp: { '0%': { opacity: '0', transform: 'translateY(10px)' }, '100%': { opacity: '1', transform: 'translateY(0)' }, },
@@ -70,7 +70,7 @@
               speakBob: { '0%, 100%': { transform: 'translateY(0) scale(1)' }, '50%': { transform: 'translateY(-2px) scale(1.05)' }, },
               thinkGlance: { '0%, 100%': { transform: 'translateX(0px)' }, '25%': { transform: 'translateX(-1px)' }, '75%': { transform: 'translateX(1px)' }, },
               blink: { '0%, 90%, 100%': { transform: 'scaleY(1)' }, '95%': { transform: 'scaleY(0.1)' }, },
-              'dot-blink': { '0%': { opacity: '0.2' }, '100%': { opacity: '1' } }, // Keyframes for the dot
+              'cursor-blink': { '0%, 100%': { opacity: '1' }, '50%': { opacity: '0' } }, 
               happyBounce: { '0%, 100%': { transform: 'translateY(0) rotate(0deg) scale(1)' }, '50%': { transform: 'translateY(-3px) rotate(3deg) scale(1.03)' }, },
               'modal-fade-in': { '0%': { opacity: '0', transform: 'scale(0.95)' }, '100%': { opacity: '1', transform: 'scale(1)' }, },
               'modal-fade-out': { '0%': { opacity: '1', transform: 'scale(1)' }, '100%': { opacity: '0', transform: 'scale(0.95)' }, },
@@ -105,7 +105,8 @@
           --border-default: 229 231 235; --border-light: 243 244 246; --border-medium: 209 213 219; 
           --interactive-hover: 229 231 235; 
           --status-info: 59 130 246; --status-success: 22 163 74; --status-warning: 245 158 11; --status-error: 220 38 38;
-          --error-fg: 255 255 255; 
+          --error-fg: 255 255 255;
+          --shimmer-duration: 2.5s; /* Default shimmer speed */
         }
         html, body, #root { @apply h-full overflow-hidden bg-surface-main; }
         body { @apply font-sans text-text-primary m-0; }
@@ -140,17 +141,14 @@
         .chat-messages-container::-webkit-scrollbar { width: 0px; } 
         .chat-messages-container { scrollbar-width: none; } 
         
-        /* --- NEW: Blinking Dot for Streaming Response --- */
-        .is-streaming::after {
-          content: '';
+        /* --- NEW: Blinking Cursor for Streaming Response --- */
+        .is-streaming > *:last-child::after {
+          content: '▋';
           display: inline-block;
-          width: 8px;
-          height: 8px;
-          background-color: black;
-          border-radius: 50%;
-          margin-left: 6px;
-          vertical-align: baseline; /* Aligns dot with the text line */
-          animation: dot-blink-animation; /* Use the new animation name */
+          font-weight: 300;
+          color: black;
+          vertical-align: text-bottom;
+          animation: cursor-blink;
         }
         
         .hljs { @apply !bg-transparent !text-inherit; }
@@ -236,11 +234,13 @@
                   { id: 'provider-3/gpt-4o-mini', uiName: 'Fast' },
                   { id: 'provider-6/gemini-2.5-flash-thinking', uiName: 'Smart' }
               ],
-              default: 'provider-3/gpt-4o-mini', // Default to "Fast" model
+              default: 'provider-3/gpt-4o-mini',
           },
           settings: {
               temperature: 0.8,
-              stream: true,
+              stream: false, // We will simulate streaming for a consistent experience
+              streamingSpeedMs: 10,   // Control the typing speed here (in milliseconds)
+              shimmerSpeedSeconds: 2.5 // Control indicator shimmer speed here (in seconds)
           }
       };
       // ---= END CONFIGURATION =---
@@ -500,7 +500,7 @@ Your goal is to be a helpful, knowledgeable, and entertaining friend. Make every
                       );
                   } else {
                       const textForMarkdown = (typeof message.finalAnswerText === 'string' && message.finalAnswerText) ? message.finalAnswerText : messageTextContent;
-                      const isStreaming = message.isLoading && !!textForMarkdown; // Condition for blinking dot
+                      const isStreaming = message.isLoading && !!textForMarkdown; // Condition for blinking cursor
                       contentToShow = (
                           <div ref={contentRef}>
                               <div 
@@ -798,6 +798,10 @@ Your goal is to be a helpful, knowledgeable, and entertaining friend. Make every
           const isStoppingGenerationRef = useRef(false); const streamTextBuffer = useRef(""); 
 
           useEffect(() => {
+              document.documentElement.style.setProperty('--shimmer-duration', `${CONFIG.settings.shimmerSpeedSeconds}s`);
+          }, []);
+
+          useEffect(() => {
             if (toast) {
                 const timer = setTimeout(() => setToast(null), 4000);
                 return () => clearTimeout(timer);
@@ -909,40 +913,17 @@ Your goal is to be a helpful, knowledgeable, and entertaining friend. Make every
               }
           };
 
-          const streamFinalAnswer = async (targetAiMessageUiId, history, modelToUse) => {
-              const response = await fetch(CONFIG.api.a4f.baseUrl, {
-                  method: 'POST',
-                  headers: { 'Authorization': `Bearer ${CONFIG.api.a4f.apiKey}`, 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ model: modelToUse, messages: history, stream: CONFIG.settings.stream, temperature: CONFIG.settings.temperature }),
-              });
-              if (!response.ok) throw new Error(`Final answer request failed with status ${response.status}`);
-
-              const reader = response.body.getReader();
-              const decoder = new TextDecoder();
-              let buffer = '';
+          const simulateTypingEffect = async (targetAiMessageUiId, fullText) => {
               streamTextBuffer.current = "";
-
-              while (true) {
-                  const { done, value } = await reader.read();
-                  if (done || isStoppingGenerationRef.current) break;
-                  buffer += decoder.decode(value, { stream: true });
-                  const lines = buffer.split('\n');
-                  buffer = lines.pop();
-                  for (const line of lines) {
-                      if (line.trim().startsWith('data: ')) {
-                          const jsonStr = line.trim().substring(5);
-                          if (jsonStr === '[DONE]') break;
-                          try {
-                              const chunk = JSON.parse(jsonStr);
-                              const chunkText = chunk.choices?.[0]?.delta?.content;
-                              if (chunkText) {
-                                  streamTextBuffer.current += chunkText;
-                                  setChatMessages(prev => prev.map(msg => msg.id === targetAiMessageUiId ? { ...msg, finalAnswerText: streamTextBuffer.current, text: streamTextBuffer.current, parts: [{ text: streamTextBuffer.current }], isLoading: true, loadingText: '' } : msg));
-                              }
-                          } catch (e) { console.error('Error parsing final stream:', e); }
-                      }
-                  }
+              for (const char of fullText) {
                   if (isStoppingGenerationRef.current) break;
+                  streamTextBuffer.current += char;
+                  setChatMessages(prev => prev.map(msg => 
+                      msg.id === targetAiMessageUiId 
+                      ? { ...msg, isLoading: true, loadingText: '', finalAnswerText: streamTextBuffer.current, text: streamTextBuffer.current, parts: [{ text: streamTextBuffer.current }] } 
+                      : msg
+                  ));
+                  await new Promise(resolve => setTimeout(resolve, CONFIG.settings.streamingSpeedMs));
               }
           };
 
@@ -956,7 +937,7 @@ Your goal is to be a helpful, knowledgeable, and entertaining friend. Make every
                   const initialResponse = await fetch(CONFIG.api.a4f.baseUrl, {
                       method: 'POST',
                       headers: { 'Authorization': `Bearer ${CONFIG.api.a4f.apiKey}`, 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ model: modelToUse, messages: initialHistory, stream: false, temperature: CONFIG.settings.temperature }),
+                      body: JSON.stringify({ model: modelToUse, messages: initialHistory, stream: CONFIG.settings.stream, temperature: CONFIG.settings.temperature }),
                   });
                   
                   if (!initialResponse.ok) {
@@ -966,6 +947,8 @@ Your goal is to be a helpful, knowledgeable, and entertaining friend. Make every
                   
                   const initialData = await initialResponse.json();
                   const initialContent = initialData.choices?.[0]?.message?.content || "";
+                  
+                  let finalAnswerText = "";
                   const searchMatch = initialContent.match(/\[SEARCH: "([^"]+)"\]/);
                   
                   if (searchMatch && searchMatch[1]) {
@@ -983,28 +966,32 @@ Your goal is to be a helpful, knowledgeable, and entertaining friend. Make every
                       await new Promise(resolve => setTimeout(resolve, 1000));
                       if(isStoppingGenerationRef.current) throw new Error("Generation stopped");
 
-
                       const finalHistory = [
                           ...initialHistory,
                           { role: 'assistant', content: initialContent },
                           { role: 'user', content: `Okay, I have the search results for "${searchQuery}". Please use this information to answer my original question. Do not mention the search process or the command format, just provide the answer directly in Roman Urdu. Here are the results:\n\n${toolContent}` }
                       ];
-                      await streamFinalAnswer(targetAiMessageUiId, finalHistory, modelToUse);
                       
+                      const finalResponse = await fetch(CONFIG.api.a4f.baseUrl, {
+                          method: 'POST',
+                          headers: { 'Authorization': `Bearer ${CONFIG.api.a4f.apiKey}`, 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ model: modelToUse, messages: finalHistory, stream: CONFIG.settings.stream, temperature: CONFIG.settings.temperature }),
+                      });
+
+                      if (!finalResponse.ok) throw new Error("Final answer request failed");
+                      const finalData = await finalResponse.json();
+                      finalAnswerText = finalData.choices?.[0]?.message?.content || "Sorry, I couldn't process the search results.";
+
                   } else {
-                      streamTextBuffer.current = "";
-                      for (const char of initialContent) {
-                          if (isStoppingGenerationRef.current) break;
-                          streamTextBuffer.current += char;
-                          setChatMessages(prev => prev.map(msg => msg.id === targetAiMessageUiId ? { ...msg, isLoading: true, loadingText: '', finalAnswerText: streamTextBuffer.current, text: streamTextBuffer.current, parts: [{ text: streamTextBuffer.current }] } : msg));
-                          await new Promise(resolve => setTimeout(resolve, 8));
-                      }
+                      finalAnswerText = initialContent;
                   }
 
+                  // Clear indicators and start typing effect
+                  setChatMessages(prev => prev.map(m => m.id === targetAiMessageUiId ? { ...m, isAnalyzing: false, showSourcesOnly: false, searchQuery: null } : m));
+                  await simulateTypingEffect(targetAiMessageUiId, finalAnswerText);
+
               } catch (err) {
-                  if (err.message === "Generation stopped") {
-                      // Do nothing, just let finally handle it.
-                  } else {
+                  if (err.message !== "Generation stopped") {
                     console.error("AI stream error:", err);
                     let errorTextForUser = `A network error occurred. Please check your connection and try again. (${err.message})`;
                     setToast({ text: errorTextForUser, type: 'error' });
