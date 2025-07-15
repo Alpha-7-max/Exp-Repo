@@ -143,12 +143,13 @@
         
         /* --- NEW: Blinking Cursor for Streaming Response --- */
         .is-streaming > *:last-child::after {
-          content: '⬤';
+          content: '⬤'; /* Block cursor character */
           display: inline-block;
-          font-weight: 300;
-          color: black;
-          vertical-align: text-bottom;
-          animation: cursor-blink;
+          font-weight: normal;
+          color: currentColor; /* Inherit color from parent */
+          vertical-align: baseline; /* Align with text baseline */
+          animation: cursor-blink 1.2s infinite steps(1);
+          margin-left: 2px; /* Small space after text */
         }
         
         .hljs { @apply !bg-transparent !text-inherit; }
