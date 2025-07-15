@@ -233,7 +233,7 @@
           settings: {
               temperature: 0.8,
               stream: false, // We will simulate streaming for a consistent experience
-              streamingSpeedMs: 10,   // Control the typing speed here (in milliseconds)
+              streamingSpeedMs: 5,   // Control the typing speed here (in milliseconds)
               shimmerSpeedSeconds: 1.5 // Control indicator shimmer speed here (in seconds)
           }
       };
@@ -303,7 +303,7 @@ Your goal is to be a helpful, knowledgeable, and entertaining friend. Make every
       const FileTextIcon = (props) => (<i className={`fa-solid fa-file-lines ${props.className || ''}`}></i>);
       
       const IndicatorBase = ({ children }) => (
-          <div className="px-3 py-1 bg-white rounded-lg border border-slate-300 max-w-fit my-2 self-start ml-0">
+          <div className="px-3 py-1 bg-white rounded-xl border border-slate-300/50 max-w-fit my-2 self-start ml-0">
               {children}
           </div>
       );
@@ -378,7 +378,7 @@ Your goal is to be a helpful, knowledgeable, and entertaining friend. Make every
           };
 
           return (
-              <div className="p-2.5 bg-white rounded-lg border border-slate-300 max-w-fit my-2 self-start ml-0 animate-scale-in-subtle space-y-2">
+              <div className="p-2.5 bg-white rounded-xl border border-slate-300/50 max-w-fit my-2 self-start ml-0 animate-scale-in-subtle space-y-2">
                   {/* Title Section */}
                   <div className="flex items-center space-x-1.5">
                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 text-text-subtle">
