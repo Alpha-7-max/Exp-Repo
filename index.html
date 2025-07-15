@@ -164,34 +164,28 @@
         .image-preview-container-input::-webkit-scrollbar { @apply w-1.5 h-1.5; } .image-preview-container-input::-webkit-scrollbar-track { @apply bg-slate-100 rounded-full; } .image-preview-container-input::-webkit-scrollbar-thumb { @apply bg-slate-300 rounded-full hover:bg-slate-400; }
 
         @keyframes reveal-shimmer {
-            0% { background-position: 150% 0; }
-            100% { background-position: -150% 0; }
+            0% { background-position: 200% center; }
+            100% { background-position: -200% center; }
         }
 
         .revealing-text {
             font-size: 13px;
-            font-weight: 300; /* Lighter font weight */
-            color: #d1d5db; /* Base gray color for text */
-            position: relative;
-        }
-        
-        .revealing-text::before {
-            content: attr(data-text); 
-            position: absolute;
-            left: 0;
-            top: 0;
-            color: transparent; 
-            background-image: linear-gradient(
-                90deg,
-                transparent 25%,
-                var(--shimmer-color, #1f2937),
-                var(--shimmer-color, #1f2937),
-                transparent 75%
-            );
-            background-size: 300% 100%;
-            background-clip: text;
+            font-weight: 300;
+            color: transparent;
+            background-image: 
+                linear-gradient(
+                    90deg,
+                    transparent 20%,
+                    var(--shimmer-color, #1f2937) 50%,
+                    transparent 80%
+                ),
+                linear-gradient(#d1d5db, #d1d5db);
+            background-size: 200% 100%, 100% 100%;
+            background-position: 200% center, 0 0;
+            background-repeat: no-repeat;
             -webkit-background-clip: text;
-            animation: reveal-shimmer 2s linear infinite;
+            background-clip: text;
+            animation: reveal-shimmer var(--shimmer-duration, 2.5s) linear infinite;
         }
       }
     </style>
@@ -240,7 +234,7 @@
               temperature: 0.8,
               stream: false, // We will simulate streaming for a consistent experience
               streamingSpeedMs: 10,   // Control the typing speed here (in milliseconds)
-              shimmerSpeedSeconds: 2.5 // Control indicator shimmer speed here (in seconds)
+              shimmerSpeedSeconds: 3 // Control indicator shimmer speed here (in seconds)
           }
       };
       // ---= END CONFIGURATION =---
@@ -317,7 +311,6 @@ Your goal is to be a helpful, knowledgeable, and entertaining friend. Make every
       const ShimmerText = ({ text, color = '#1f2937' }) => (
           <span 
               className="revealing-text" 
-              data-text={text} 
               style={{'--shimmer-color': color}}
           >
               {text}
