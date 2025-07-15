@@ -106,7 +106,7 @@
           --interactive-hover: 229 231 235; 
           --status-info: 59 130 246; --status-success: 22 163 74; --status-warning: 245 158 11; --status-error: 220 38 38;
           --error-fg: 255 255 255;
-          --shimmer-duration: 2.5s; /* Default shimmer speed */
+          --shimmer-duration: 3s; /* Default shimmer speed */
         }
         html, body, #root { @apply h-full overflow-hidden bg-surface-main; }
         body { @apply font-sans text-text-primary m-0; }
@@ -185,7 +185,7 @@
             background-repeat: no-repeat;
             -webkit-background-clip: text;
             background-clip: text;
-            animation: reveal-shimmer var(--shimmer-duration, 2.5s) linear infinite;
+            animation: reveal-shimmer var(--shimmer-duration, 1.5s) linear infinite;
         }
       }
     </style>
@@ -234,7 +234,7 @@
               temperature: 0.8,
               stream: false, // We will simulate streaming for a consistent experience
               streamingSpeedMs: 10,   // Control the typing speed here (in milliseconds)
-              shimmerSpeedSeconds: 3 // Control indicator shimmer speed here (in seconds)
+              shimmerSpeedSeconds: 1.5 // Control indicator shimmer speed here (in seconds)
           }
       };
       // ---= END CONFIGURATION =---
