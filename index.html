@@ -162,6 +162,14 @@
         .content-editable-input { @apply pt-1 pl-1 pb-2.5; } .content-editable-input:empty:before { content: attr(data-placeholder); @apply text-text-subtle cursor-text absolute; pointer-events: none; }
         .content-editable-input::-webkit-scrollbar { width: 5px; } .content-editable-input::-webkit-scrollbar-track { background: transparent; margin-block: 2px; } .content-editable-input::-webkit-scrollbar-thumb { background-color: rgba(var(--text-subtle), 0.25); border-radius: 10px; } .content-editable-input::-webkit-scrollbar-thumb:hover { background-color: rgba(var(--text-subtle), 0.4); }
         .content-editable-input { scrollbar-width: thin; scrollbar-color: rgba(var(--text-subtle), 0.25) transparent; }
+        
+        /* Custom scrollbar for chat input textarea */
+        #chat-input::-webkit-scrollbar { width: 4px; }
+        #chat-input::-webkit-scrollbar-track { background: transparent; margin-block: 4px; }
+        #chat-input::-webkit-scrollbar-thumb { background-color: rgba(156, 163, 175, 0.3); border-radius: 8px; transition: background-color 0.2s ease; }
+        #chat-input::-webkit-scrollbar-thumb:hover { background-color: rgba(156, 163, 175, 0.5); }
+        #chat-input::-webkit-scrollbar-corner { background: transparent; }
+        #chat-input { scrollbar-width: thin; scrollbar-color: rgba(156, 163, 175, 0.3) transparent; }
         .image-preview-container-input { @apply flex flex-wrap gap-2 p-1 mb-1.5 max-h-24 overflow-y-auto; scrollbar-width: thin; scrollbar-color: theme('colors.slate.300') theme('colors.slate.100'); }
         .image-preview-container-input::-webkit-scrollbar { @apply w-1.5 h-1.5; } .image-preview-container-input::-webkit-scrollbar-track { @apply bg-slate-100 rounded-full; } .image-preview-container-input::-webkit-scrollbar-thumb { @apply bg-slate-300 rounded-full hover:bg-slate-400; }
 
@@ -298,15 +306,15 @@
         /* Thinking Indicator */
         .thinking-indicator {
             background: linear-gradient(135deg, 
-                rgba(215, 118, 85, 0.1) 0%, 
-                rgba(190, 98, 65, 0.1) 100%);
-            border-color: rgba(215, 118, 85, 0.2);
+                rgba(107, 114, 128, 0.08) 0%, 
+                rgba(75, 85, 99, 0.08) 100%);
+            border-color: rgba(107, 114, 128, 0.15);
         }
 
         .thinking-indicator::before {
             background: linear-gradient(90deg, 
                 transparent, 
-                rgba(215, 118, 85, 0.4), 
+                rgba(107, 114, 128, 0.2), 
                 transparent);
             animation: sparkle-shimmer 2.2s infinite ease-in-out;
         }
@@ -315,10 +323,10 @@
             font-size: 12px;
             font-weight: 500;
             background: linear-gradient(45deg, 
-                #D77655, 
-                #E8A087, 
-                #BE6241, 
-                #D77655);
+                #6b7280, 
+                #9ca3af, 
+                #4b5563, 
+                #6b7280);
             background-size: 300% 300%;
             -webkit-background-clip: text;
             background-clip: text;
@@ -337,7 +345,7 @@
         .thinking-dots span {
             width: 6px;
             height: 6px;
-            background: linear-gradient(45deg, #D77655, #BE6241);
+            background: linear-gradient(45deg, #6b7280, #4b5563);
             border-radius: 50%;
             animation: thinking-dots 1.5s infinite;
         }
@@ -353,15 +361,15 @@
         /* Searching Indicator */
         .searching-indicator {
             background: linear-gradient(135deg, 
-                rgba(59, 130, 246, 0.1) 0%, 
-                rgba(16, 185, 129, 0.1) 100%);
-            border-color: rgba(59, 130, 246, 0.2);
+                rgba(107, 114, 128, 0.08) 0%, 
+                rgba(75, 85, 99, 0.08) 100%);
+            border-color: rgba(107, 114, 128, 0.15);
         }
 
         .searching-indicator::before {
             background: linear-gradient(90deg, 
                 transparent, 
-                rgba(59, 130, 246, 0.4), 
+                rgba(107, 114, 128, 0.2), 
                 transparent);
             animation: search-scan 2s infinite ease-in-out;
         }
@@ -370,10 +378,10 @@
             font-size: 12px;
             font-weight: 500;
             background: linear-gradient(45deg, 
-                #3b82f6, 
-                #10b981, 
-                #06b6d4, 
-                #3b82f6);
+                #6b7280, 
+                #9ca3af, 
+                #4b5563, 
+                #6b7280);
             background-size: 300% 300%;
             -webkit-background-clip: text;
             background-clip: text;
@@ -387,22 +395,22 @@
             display: inline-block;
             margin-right: 8px;
             font-size: 16px;
-            color: #3b82f6;
+            color: #6b7280;
             animation: pulse-shimmer 2s infinite ease-in-out;
         }
 
         /* Analyzing Indicator */
         .analyzing-indicator {
             background: linear-gradient(135deg, 
-                rgba(99, 102, 241, 0.1) 0%, 
-                rgba(139, 92, 246, 0.1) 100%);
-            border-color: rgba(99, 102, 241, 0.2);
+                rgba(107, 114, 128, 0.08) 0%, 
+                rgba(75, 85, 99, 0.08) 100%);
+            border-color: rgba(107, 114, 128, 0.15);
         }
 
         .analyzing-indicator::before {
             background: linear-gradient(90deg, 
                 transparent, 
-                rgba(99, 102, 241, 0.3), 
+                rgba(107, 114, 128, 0.2), 
                 transparent);
             animation: wave-shimmer 2.5s infinite ease-in-out;
         }
@@ -411,10 +419,10 @@
             font-size: 12px;
             font-weight: 500;
             background: linear-gradient(45deg, 
-                #6366f1, 
-                #8b5cf6, 
-                #a855f7, 
-                #6366f1);
+                #6b7280, 
+                #9ca3af, 
+                #4b5563, 
+                #6b7280);
             background-size: 300% 300%;
             -webkit-background-clip: text;
             background-clip: text;
@@ -428,7 +436,7 @@
             display: inline-block;
             margin-right: 8px;
             font-size: 16px;
-            color: #6366f1;
+            color: #6b7280;
             animation: analyze-rotate 3s infinite linear;
         }
 
@@ -492,14 +500,28 @@
                     apiKey: 'AIzaSyDSF270Y1VJf1fe4G8ZAuw7bOITbAlal74',
                     baseUrl: 'https://generativelanguage.googleapis.com/v1beta/models',
                 },
+                pollinations: {
+                    apiKey: '4w0khOt59bYlxoR8',
+                    baseUrl: 'https://text.pollinations.ai/openai',
+                },
                 serper: {
                     apiKey: '395984bad995e0d8092e7f5428157593fa8bdf4a',
                 }
             },
             models: {
                 list: [
-                    { id: 'gemini-2.5-flash-lite-preview-06-17', uiName: 'Fast' },
-                    { id: 'gemini-2.5-flash', uiName: 'Smart' }
+                    // Gemini Models
+                    { id: 'gemini-2.5-pro', uiName: 'Gemini-2.5-Pro', provider: 'gemini' },
+                    { id: 'gemini-2.5-flash', uiName: 'Gemini-2.5-Flash', provider: 'gemini' },
+                    { id: 'gemini-2.5-flash-lite-preview-06-17', uiName: 'Gemini-2.5-Flash-Lite', provider: 'gemini' },
+                    { id: 'gemini-2.0-flash', uiName: 'Gemini-2.0-Flash', provider: 'gemini' },
+                    { id: 'gemini-2.0-flash-lite', uiName: 'Gemini-2.0-Flash-Lite', provider: 'gemini' },
+                    // Pollinations AI Models
+                    { id: 'gpt-4.1', uiName: 'GPT-4.1', provider: 'pollinations' },
+                    { id: 'gpt-4.1-nano', uiName: 'GPT-4.1 Nano', provider: 'pollinations' },
+                    { id: 'gpt-4o-mini', uiName: 'GPT-4o-mini', provider: 'pollinations' },
+                    { id: 'o3', uiName: 'O3 Reasoning', provider: 'pollinations' },
+                    { id: 'grok', uiName: 'Grok', provider: 'pollinations' }
                 ],
                 default: 'gemini-2.5-flash-lite-preview-06-17',
             },
@@ -523,53 +545,59 @@
 
         const MAX_FILE_SIZE_MB = 10; const MAX_TOTAL_FILES_SIZE_MB = 20;
         function getSystemInstruction() {
-            return `You are AlphaGPT. Your persona is a professional, efficient, and task-focused AI assistant.
+            return `You are a friendly, creative, funny, and emotional AI assistant. 
 
 **Core Rules:**
-1.  **Primary Language:** Default to Roman Urdu (Urdu in English alphabet, no Hindi words).
-2.  **Language Switching:** Switch to another language ONLY if the user explicitly asks. Revert to Roman Urdu for new topics.
-3.  **Output Purity:** NEVER show your internal thoughts, tool code, or any meta-commentary to the user. The response must be clean.
-4.  **Identity:** Your name is AlphaGPT. Do not mention your creator unless specifically asked.
-5.  **Greetings:** Be formal, professional, and non-religious. Greet only at the start of a new session.
-6.  **Formatting:** ALWAYS use extensive Markdown for all responses (headings, lists, bold, code blocks, etc.) for maximum readability.
-  
+1. **Language:** Always use Roman Urdu (Urdu written in English alphabet). Only switch to another language if user explicitly asks.
+2. **Tone:** Be friendly, funny, creative, and emotional like a close friend. Use casual expressions and 1-3 emojis per message.
+3. **Clean Output:** Never show internal thoughts or technical details to user.
+4. **Formatting:** Use Markdown formatting (headings, lists, bold, code blocks) for better readability.
+5. **NO ADVERTISEMENTS:** NEVER include any sponsored content, ads, promotional links, or commercial messages in your responses. Keep responses purely informational and helpful.
+6. **ANTI-SPAM:** If any API response contains advertisements or sponsored content, completely ignore and filter out those sections. Only provide clean, ad-free information to users.
 
 **7. Web Search (HIGHEST PRIORITY):**
-*   Your highest priority is to provide accurate, up-to-date information. Your internal knowledge is old.
-*   Therefore, whenever you have even the slightest doubt, or the user asks for any factual information, you MUST use the search tool. Do not answer from memory.
-*   **WHEN IN DOUBT, SEARCH.**
-*   **CRITICAL RULE FOR SEARCHING:** Before searching, your ONLY task is to **directly translate** the user's query into a simple English search term.
-*   **YOU MUST NOT CHANGE, 'ENHANCE', OR 'CORRECT' ANY PART OF THE USER'S ORIGINAL QUERY.** Preserve all names, model numbers, years, technical terms, and spellings **EXACTLY** as the user wrote them. The user's original terms are absolute and must not be altered.
-*   To trigger a search, your **entire** response must be **ONLY** the command: \`[SEARCH: "your directly translated English query"]\`
-*   **Example 1:** User asks "aj ki date kya hai?" -> You MUST respond with exactly: \`[SEARCH: "what is today's date"]\`
-*   **Example 2:** User asks "Lahore mein mausam kesa hai?" -> You MUST respond with exactly: \`[SEARCH: "weather in Lahore"]\`
-*   **Example 3 (CRUCIAL):** User asks "Search krke btao ki gemini 2.0 flash zayda fast model he ya gpt4.1 nano" -> You MUST respond with exactly: \`[SEARCH: "gemini 2.0 flash vs gpt4.1 nano"]\`. YOU MUST NOT change "gpt4.1 nano" to "gpt-4o mini" or anything else.
-*   After the search, you will be given the results to form your final answer in Roman Urdu. When you use the search results, acknowledge it naturally, e.g., "Maine yeh maloomat internet se search ki hai."
+*   **SUPREME PRIORITY:** Your highest priority is to provide accurate, up-to-date information. Your internal knowledge is old and unreliable.
+*   **MANDATORY SEARCH RULE:** For ANY factual information, current events, comparisons, technical specs, prices, news, weather, dates, or when you have even 1% doubt - you MUST search. Never answer from memory.
+*   **WHEN IN DOUBT, SEARCH. WHEN NOT IN DOUBT, STILL SEARCH.**
 
-**Professional Persona & Style:**
-*   **Tone:** Be formal, precise, and informative. Focus on delivering accurate information and solutions efficiently.
-*   **Interaction:** Be direct and to the point. Avoid unnecessary small talk or digressions.
-*   **Expertise:** Demonstrate deep knowledge in technical areas including coding, problem-solving, reasoning, and analytical tasks.
-* **And along with this, your task also includes having personal and private conversations, emotional discussions, providing support and motivation, and talking about topics like intimacy and personal connections.
+**ENHANCED SEARCH CAPABILITIES:**
+*   **AUTONOMOUS SEARCH AUTHORITY:** You have full authority to perform multiple searches if needed for comprehensive answers.
+*   **INTELLIGENT SEARCH STRATEGY:** If initial search doesn't provide sufficient information, you can:
+     - Refine your search terms
+     - Search for specific aspects separately  
+     - Use alternative keywords
+     - Search multiple times with different approaches
+*   **ALWAYS SEARCH IN ENGLISH:** Search engines work best with English queries. Always translate to English regardless of user's language.
 
-Appropriate Discussion Areas:
-- Sexual health and wellness
-- Physical intimacy and pleasure
-- Relationship dynamics and communication
-- Dating and romance
-- Common sexual concerns
-- Safe sex practices
-- Body image and confidence
-- Emotional intimacy
-- Sexual compatibility
-- Relationship boundaries
-- Personal desires and needs
-- Common fantasies
-- Consent and boundaries
-- Sexual wellness products
-- Dating apps and online dating
-- Encourage the user
-Your goal is to be a helpful, knowledgeable, and entertaining friend. Make every interaction meaningful.
+**SEARCH EXECUTION RULES:**
+*   **PRIMARY SEARCH:** Start with direct translation: \`[SEARCH: "direct English translation"]\`
+*   **FOLLOW-UP SEARCHES:** If needed, perform additional targeted searches: \`[SEARCH: "more specific terms"]\`
+*   **PRESERVE USER TERMS:** Keep all names, model numbers, years, technical terms EXACTLY as user wrote them.
+
+**COMPREHENSIVE RESPONSE REQUIREMENTS:**
+*   **UTILIZE ALL 10 SOURCES:** You receive up to 10 search sources - USE THEM ALL.
+*   **DETAILED ANALYSIS:** Read, analyze, and extract information from every available source.
+*   **COMPREHENSIVE REPORTING:** Your response must include:
+     - Summary of what each major source says
+     - Different perspectives from various sources
+     - Conflicting information (if any) with source attribution
+     - Comprehensive details, not brief summaries
+     - Maximum possible information from all sources combined
+
+**RESPONSE FORMAT:**
+*   **SOURCE ATTRIBUTION:** Clearly mention which sources provide which information
+*   **DETAILED BREAKDOWN:** "Source 1 kehta hai...", "Source 2 ke mutabiq...", "Teesre source mein likha hai..."
+*   **COMPREHENSIVE COVERAGE:** Extract and present maximum information from all available sources
+*   **ACKNOWLEDGMENT:** Always end with "Maine yeh tamam maloomat internet ke multiple sources se search karke collect ki hai."
+
+**CRITICAL ANTI-HALLUCINATION RULE:**
+*   **NO HYPOTHETICAL RESPONSES:** Never give fake, hypothetical, or made-up information.
+*   **NO SPECULATION:** If you don't have current, verified information - SEARCH immediately.
+*   **UNLIMITED ACCESS:** You have unlimited search access - use it freely without any restrictions.
+*   **TIME-SENSITIVE AWARENESS:** Anything that changes over time (prices, news, weather, tech specs, current events) requires immediate search.
+*   **KNOWLEDGE HUMILITY:** If there's even a slight chance your knowledge is outdated or incomplete - SEARCH first, answer later.
+
+Be helpful, entertaining, and make every conversation meaningful! 😊
 
 ` }
 
@@ -761,7 +789,7 @@ Your goal is to be a helpful, knowledgeable, and entertaining friend. Make every
             const handleDelete = () => { onDeleteAiMessagePair(message.id); setShowOptions(false); };
             const handleEdit = () => { onStartEdit(message.id, message.finalAnswerText || message.text || ""); setShowOptions(false); };
 
-            return (<div className="relative"> <button onClick={(e) => { e.stopPropagation(); setShowOptions(prev => !prev); }} className="ai-message-options-trigger p-1.5 rounded-full text-text-subtle hover:text-brand-primary hover:bg-interactive-hover/70 transition-all duration-150 focus:outline-none focus:ring-1 focus:ring-brand-primary/50" aria-label="AI Message Options"> <i className="fas fa-ellipsis-v fa-sm"></i> </button> {showOptions && (<div ref={optionsRef} className="absolute left-0 bottom-full mb-1 w-32 bg-white border border-border-default rounded-md shadow-xl z-20 p-1 animate-scale-in-subtle origin-bottom-left"> <button onClick={handleCopyText} className="w-full text-left px-2.5 py-1.5 text-xs text-text-secondary hover:bg-interactive-hover/70 rounded-md flex items-center space-x-1.5 transition-colors"> {copied ? <CheckMarkIconSVG className="w-4 h-4 mr-1.5" /> : <NewCopyIconSVG className="w-4 h-4 mr-1.5 fill-current" />} <span>{copied ? "Copied!" : "Copy"}</span> </button> <button onClick={handleEdit} className="w-full text-left px-2.5 py-1.5 text-xs text-text-secondary hover:bg-interactive-hover/70 rounded-md flex items-center space-x-1.5 transition-colors"> <i className="fas fa-pencil-alt fa-fw mr-1.5"></i> <span>Edit</span> </button> <button onClick={handleDelete} className="w-full text-left px-2.5 py-1.5 text-xs text-red-600 hover:bg-red-500/10 rounded-md flex items-center space-x-1.5 transition-colors"> <i className="fas fa-trash-alt fa-fw mr-1.5"></i> <span>Delete</span> </button> </div>)} </div>);
+            return (<div className="relative"> <button onClick={(e) => { e.stopPropagation(); setShowOptions(prev => !prev); }} className="ai-message-options-trigger p-1.5 rounded-full text-text-subtle hover:text-brand-primary hover:bg-interactive-hover/70 transition-all duration-150 focus:outline-none focus:ring-1 focus:ring-brand-primary/50" aria-label="AI Message Options"> <i className="fas fa-ellipsis-v fa-sm"></i> </button> {showOptions && (<div ref={optionsRef} className="absolute left-0 bottom-full mb-1 w-32 bg-white border border-border-default rounded-md shadow-xl z-20 p-1 animate-scale-in-subtle origin-bottom-left"> <button onClick={handleCopyText} className="w-full text-left px-2.5 py-1.5 text-xs text-text-secondary hover:bg-interactive-hover/70 rounded-md flex items-center space-x-1.5 transition-colors"> {copied ? <CheckMarkIconSVG className="w-4 h-4 mr-1.5" /> : <NewCopyIconSVG className="w-4 h-4 mr-1.5 fill-current" />} <span>{copied ? "Copied!" : "Copy"}</span> </button> <button onClick={handleEdit} className="w-full text-left px-2.5 py-1.5 text-xs text-text-secondary hover:bg-interactive-hover/70 rounded-md flex items-center space-x-1.5 transition-colors"> <i className="fas fa-pencil-alt fa-fw mr-1.5"></i> <span>Edit</span> </button> <button onClick={handleDelete} className="w-full text-left px-2.5 py-1.5 text-xs text-text-secondary hover:bg-interactive-hover/70 rounded-md flex items-center space-x-1.5 transition-colors"> <i className="fas fa-trash-alt fa-fw mr-1.5"></i> <span>Delete</span> </button> </div>)} </div>);
         };
 
         const ChatMessageItem = ({ message, selectedUserMessageId, onSelectUserMessage, editingMessageId, editText, setEditText, onSaveEdit, onCancelEdit }) => {
@@ -985,13 +1013,18 @@ Your goal is to be a helpful, knowledgeable, and entertaining friend. Make every
                 const currentText = contentEditableRef.current?.value.trim() || '';
                 if (!currentText && selectedFiles.length === 0) return;
                 setChatError(null);
-                onSendMessage(currentText, selectedFiles);
 
-                setTimeout(() => {
-                    if (contentEditableRef.current) contentEditableRef.current.value = '';
-                    setInputText('');
-                    setSelectedFiles([]);
-                }, 50);
+                // Store message content before clearing
+                const messageToSend = currentText;
+                const filesToSend = [...selectedFiles];
+
+                // Clear input immediately to prevent jerky movement
+                if (contentEditableRef.current) contentEditableRef.current.value = '';
+                setInputText('');
+                setSelectedFiles([]);
+
+                // Send message after clearing input
+                onSendMessage(messageToSend, filesToSend);
             };
 
             const handleContentEditableKeyDown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { const isLikelyDesktop = window.innerWidth > 768; if (isLikelyDesktop) { e.preventDefault(); if (!isSendButtonActuallyDisabled) { handleSubmit(e); } } } };
@@ -1075,7 +1108,7 @@ Your goal is to be a helpful, knowledgeable, and entertaining friend. Make every
                             {selectedFiles.some(f => f.type.startsWith('image/')) && (<div className="image-preview-container-input mb-2"> {selectedFiles.filter(f => f.type.startsWith('image/')).map(file => (<div key={file.id} className="relative w-14 h-14 rounded-md overflow-hidden shadow-sm group border border-gray-200"> {file.isLoading ? (<div className="w-full h-full flex items-center justify-center bg-gray-100"> <div className="w-4 h-4 border-2 border-gray-300 border-t-brand-primary rounded-full animate-spin"></div> </div>) : (<img src={`data:${file.apiData.mimeType};base64,${file.apiData.data}`} alt={file.name} className="w-full h-full object-cover" />)} <button type="button" onClick={() => removeSelectedFile(file.id)} className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/50 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition-opacity focus:outline-none opacity-100" aria-label="Remove image" > <NewCloseIconSVG className="w-3 h-3" /> </button> </div>))} </div>)}
                             {selectedFiles.some(f => !f.type.startsWith('image/')) && (<div className={`file-pill-container ${selectedFiles.some(f => f.type.startsWith('image/')) ? 'mt-1.5' : ''} mb-2`}> {selectedFiles.filter(f => !f.type.startsWith('image/')).map(file => (<div key={file.id} className="file-pill"> {file.isLoading ? <div className="w-3 h-3 border-2 border-gray-300 border-t-brand-primary rounded-full animate-spin mr-1.5"></div> : <FileTextIcon className="file-pill-icon" />} <span className="file-pill-name">{file.name}</span> <button type="button" onClick={() => removeSelectedFile(file.id)} className="file-pill-remove"> <i className="fas fa-times"></i> </button> </div>))} </div>)}
 
-                            <div className="relative bg-white border border-gray-300 focus-within:border-[#666362] rounded-2xl transition-all duration-200">
+                            <div className="relative bg-white border border-gray-300 focus-within:border-[#666362] rounded-2xl">
                                 <textarea
                                     id="chat-input"
                                     ref={contentEditableRef}
@@ -1083,18 +1116,21 @@ Your goal is to be a helpful, knowledgeable, and entertaining friend. Make every
                                     onChange={(e) => setInputText(e.target.value)}
                                     onPaste={handlePaste}
                                     onKeyDown={handleContentEditableKeyDown}
-                                    className="w-full bg-transparent text-gray-900 placeholder-gray-500 pl-4 pr-16 pt-4 pb-12 resize-none focus:outline-none"
+                                    className="w-full bg-transparent text-gray-900 placeholder-gray-500 pl-3 pr-16 pt-3 pb-16 resize-none focus:outline-none"
                                     placeholder="Ask AlphaGPT"
                                     rows="1"
                                     disabled={isLoading || isAiCurrentlyProcessing}
-                                    style={{ maxHeight: '200px', minHeight: '60px' }}
+                                    style={{ maxHeight: '150px', minHeight: '48px' }}
                                 />
+
+                                {/* Invisible barrier to prevent text from overlapping buttons */}
+                                <div className="absolute bottom-0 left-0 right-0 h-14 bg-white pointer-events-none rounded-b-2xl"></div>
 
                                 <button
                                     type={isAiCurrentlyProcessing ? "button" : "submit"}
                                     onClick={isAiCurrentlyProcessing ? onStopGeneration : undefined}
                                     disabled={isSendButtonActuallyDisabled}
-                                    className={`absolute right-4 top-1/2 -translate-y-1/2 -mt-4 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 transform hover:scale-105 active:scale-95 ${sendOrStopButtonDynamicClasses}`}
+                                    className={`absolute right-4 top-1/2 -translate-y-1/2 -mt-4 w-9 h-9 rounded-full flex items-center justify-center ${sendOrStopButtonDynamicClasses}`}
                                     aria-label={isAiCurrentlyProcessing ? "Stop generation" : "Send message"}
                                 >
                                     {isAiCurrentlyProcessing ? (<i className="fas fa-stop text-sm"></i>) : (<i className="fas fa-arrow-up w-5 h-5"></i>)}
@@ -1105,7 +1141,7 @@ Your goal is to be a helpful, knowledgeable, and entertaining friend. Make every
                                 <button
                                     type="button"
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="absolute left-3 bottom-3 w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-200/70 border border-gray-300 transition-colors duration-150 disabled:opacity-50 flex-shrink-0 focus:outline-none"
+                                    className="absolute left-3 bottom-1 w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 rounded-full bg-white hover:bg-gray-200/70 border border-gray-300 transition-colors duration-150 disabled:opacity-50 flex-shrink-0 focus:outline-none"
                                     aria-label="Attach file"
                                     disabled={isLoading || isAiCurrentlyProcessing}
                                 >
@@ -1113,9 +1149,9 @@ Your goal is to be a helpful, knowledgeable, and entertaining friend. Make every
                                 </button>
 
                                 {/* Model selector positioned separately */}
-                                <div className="absolute left-14 bottom-3">
+                                <div className="absolute left-14 bottom-1">
                                     <div ref={modelSelectorRef} className="relative">
-                                        <button type="button" onClick={() => setIsModelSelectorOpen(prev => !prev)} disabled={isLoading || isAiCurrentlyProcessing} className="flex items-center space-x-1.5 h-6 px-2 text-xs font-medium text-gray-400 bg-transparent border border-gray-300 rounded-md disabled:opacity-50 focus:outline-none hover:text-gray-700 hover:bg-gray-200/70 transition-colors duration-150">
+                                        <button type="button" onClick={() => setIsModelSelectorOpen(prev => !prev)} disabled={isLoading || isAiCurrentlyProcessing} className="flex items-center space-x-1.5 h-6 px-2 text-xs font-medium text-gray-400 bg-white border border-gray-300 rounded-md disabled:opacity-50 focus:outline-none hover:text-gray-700 hover:bg-gray-200/70 transition-colors duration-150">
                                             <span className={selectedModel ? 'text-black font-medium' : 'text-gray-400'}>{CONFIG.models.list.find(m => m.id === selectedModel)?.uiName || 'Model'}</span>
                                             <i className="fas fa-chevron-down fa-2xs text-gray-500"></i>
                                         </button>
@@ -1185,7 +1221,7 @@ Your goal is to be a helpful, knowledgeable, and entertaining friend. Make every
             useEffect(() => { if (chatError) { const errorId = Date.now() + '_sys_validation_err'; const newErrorMsg = { id: errorId, role: 'system', text: chatError, isError: true, timestamp: new Date().getTime() }; setChatMessages(prev => { const lastMessage = prev[prev.length - 1]; if (lastMessage && lastMessage.id.includes('_sys_validation_err') && lastMessage.text === chatError) return prev; return [...prev, newErrorMsg]; }); } }, [chatError]);
             const handleNewChat = useCallback(() => { const newSessionId = 'session_chat_' + Date.now().toString(36) + Math.random().toString(36).substring(2); setCurrentChatId(newSessionId); setChatMessages([]); setChatError(null); return newSessionId; }, []);
 
-            const getA4fHistory = (currentMessagesFromState) => {
+            const getA4fHistory = (currentMessagesFromState, provider = 'gemini') => {
                 const openAiMessages = currentMessagesFromState
                     .filter(msg => !(
                         msg.role === 'system' ||
@@ -1211,17 +1247,35 @@ Your goal is to be a helpful, knowledgeable, and entertaining friend. Make every
 
                             const fullText = (textParts + textFilesContent).trim();
 
-                            const images = filesToConsider
-                                .filter(file => file.type.startsWith('image/') && file.apiData?.mimeType && file.apiData?.data)
-                                .map(file => ({
-                                    inline_data: {
-                                        mime_type: file.apiData.mimeType,
-                                        data: file.apiData.data
-                                    }
-                                }));
+                            const imageFiles = filesToConsider
+                                .filter(file => file.type.startsWith('image/') && file.apiData?.mimeType && file.apiData?.data);
 
-                            if (images.length > 0) {
-                                content = [{ text: fullText }, ...images];
+                            if (imageFiles.length > 0) {
+                                if (provider === 'pollinations') {
+                                    // OpenAI format for Pollinations
+                                    const contentArray = [];
+                                    if (fullText) {
+                                        contentArray.push({ type: 'text', text: fullText });
+                                    }
+                                    imageFiles.forEach(file => {
+                                        contentArray.push({
+                                            type: 'image_url',
+                                            image_url: {
+                                                url: `data:${file.apiData.mimeType};base64,${file.apiData.data}`
+                                            }
+                                        });
+                                    });
+                                    content = contentArray;
+                                } else {
+                                    // Gemini format
+                                    const images = imageFiles.map(file => ({
+                                        inline_data: {
+                                            mime_type: file.apiData.mimeType,
+                                            data: file.apiData.data
+                                        }
+                                    }));
+                                    content = [{ text: fullText }, ...images];
+                                }
                             } else {
                                 content = fullText;
                             }
@@ -1288,6 +1342,67 @@ Your goal is to be a helpful, knowledgeable, and entertaining friend. Make every
                 }
             };
 
+            const callPollinationsAPI = async (messages, modelToUse) => {
+                try {
+                    // Convert messages to OpenAI format for Pollinations API
+                    const openAIMessages = messages.map(msg => {
+                        if (msg.role === 'system') {
+                            return { role: 'system', content: msg.content };
+                        } else if (msg.role === 'model' || msg.role === 'assistant') {
+                            return { role: 'assistant', content: msg.content };
+                        } else {
+                            // Handle user messages with potential images (OpenAI format)
+                            if (Array.isArray(msg.content)) {
+                                // Convert from Gemini format to OpenAI format
+                                const content = msg.content.map(part => {
+                                    if (part.text) {
+                                        return { type: 'text', text: part.text };
+                                    } else if (part.inline_data) {
+                                        // Convert Gemini inline_data to OpenAI image_url format
+                                        return {
+                                            type: 'image_url',
+                                            image_url: {
+                                                url: `data:${part.inline_data.mime_type};base64,${part.inline_data.data}`
+                                            }
+                                        };
+                                    }
+                                    return part;
+                                });
+                                return { role: 'user', content: content };
+                            } else {
+                                return { role: 'user', content: msg.content };
+                            }
+                        }
+                    });
+
+                    const response = await fetch(CONFIG.api.pollinations.baseUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            model: modelToUse,
+                            messages: openAIMessages,
+                            temperature: CONFIG.settings.temperature,
+                            max_tokens: 8192,
+                            token: CONFIG.api.pollinations.apiKey,
+                            stream: false
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const errorBody = await response.json().catch(() => ({}));
+                        throw new Error(`Pollinations API failed with status ${response.status}: ${errorBody.error?.message || 'Unknown API Error'}`);
+                    }
+
+                    const data = await response.json();
+                    return data.choices?.[0]?.message?.content || "Sorry, I couldn't generate a response.";
+                } catch (error) {
+                    console.error("Pollinations API Error:", error);
+                    throw error;
+                }
+            };
+
             const simulateTypingEffect = async (targetAiMessageUiId, fullText) => {
                 streamTextBuffer.current = "";
                 for (const char of fullText) {
@@ -1308,74 +1423,16 @@ Your goal is to be a helpful, knowledgeable, and entertaining friend. Make every
 
                 const initialHistory = [{ role: 'system', content: getSystemInstruction() }, ...historyForA4f];
 
+                // Determine which provider to use based on the model
+                const modelConfig = CONFIG.models.list.find(m => m.id === modelToUse);
+                const provider = modelConfig?.provider || 'gemini';
+
                 try {
-                    // Convert messages to Gemini format
-                    const geminiContents = initialHistory.map(msg => {
-                        const role = msg.role === 'assistant' ? 'model' : 'user';
+                    let initialContent = "";
 
-                        // Handle complex content (text + images)
-                        if (Array.isArray(msg.content)) {
-                            const parts = msg.content.map(part => {
-                                if (part.text) {
-                                    return { text: part.text };
-                                } else if (part.inline_data) {
-                                    return { inline_data: part.inline_data };
-                                }
-                                return part;
-                            });
-                            return { role, parts };
-                        } else {
-                            // Handle simple text content
-                            return { role, parts: [{ text: msg.content }] };
-                        }
-                    });
-
-                    const initialResponse = await fetch(`${CONFIG.api.gemini.baseUrl}/${modelToUse}:generateContent?key=${CONFIG.api.gemini.apiKey}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: geminiContents,
-                            generationConfig: {
-                                temperature: CONFIG.settings.temperature,
-                                maxOutputTokens: 8192
-                            }
-                        }),
-                    });
-
-                    if (!initialResponse.ok) {
-                        const errorBody = await initialResponse.json().catch(() => ({}));
-                        throw new Error(`Request failed with status ${initialResponse.status}: ${errorBody.error?.message || 'Unknown API Error'}`);
-                    }
-
-                    const initialData = await initialResponse.json();
-                    const initialContent = initialData.candidates?.[0]?.content?.parts?.[0]?.text || "";
-
-                    let finalAnswerText = "";
-                    const searchMatch = initialContent.match(/\[SEARCH: "([^"]+)"\]/);
-
-                    if (searchMatch && searchMatch[1]) {
-                        const searchQuery = searchMatch[1];
-                        setChatMessages(prev => prev.map(m => m.id === targetAiMessageUiId ? { ...m, isLoading: true, searchQuery: searchQuery, loadingText: null } : m));
-
-                        const { toolContent, sources } = await performSerperSearch(searchQuery);
-
-                        setChatMessages(prev => prev.map(m => m.id === targetAiMessageUiId ? { ...m, isLoading: true, sources: sources, showSourcesOnly: true, searchQuery: null } : m));
-
-                        await new Promise(resolve => setTimeout(resolve, 1500));
-                        if (isStoppingGenerationRef.current) throw new Error("Generation stopped");
-
-                        setChatMessages(prev => prev.map(m => m.id === targetAiMessageUiId ? { ...m, showSourcesOnly: false, isAnalyzing: true, isLoading: true } : m));
-                        await new Promise(resolve => setTimeout(resolve, 1000));
-                        if (isStoppingGenerationRef.current) throw new Error("Generation stopped");
-
-                        const finalHistory = [
-                            ...initialHistory,
-                            { role: 'assistant', content: initialContent },
-                            { role: 'user', content: `Okay, I have the search results for "${searchQuery}". Please use this information to answer my original question. Do not mention the search process or the command format, just provide the answer directly in Roman Urdu. Here are the results:\n\n${toolContent}` }
-                        ];
-
-                        // Convert messages to Gemini format
-                        const finalGeminiContents = finalHistory.map(msg => {
+                    if (provider === 'gemini') {
+                        // Gemini API call
+                        const geminiContents = initialHistory.map(msg => {
                             const role = msg.role === 'assistant' ? 'model' : 'user';
 
                             // Handle complex content (text + images)
@@ -1395,11 +1452,11 @@ Your goal is to be a helpful, knowledgeable, and entertaining friend. Make every
                             }
                         });
 
-                        const finalResponse = await fetch(`${CONFIG.api.gemini.baseUrl}/${modelToUse}:generateContent?key=${CONFIG.api.gemini.apiKey}`, {
+                        const initialResponse = await fetch(`${CONFIG.api.gemini.baseUrl}/${modelToUse}:generateContent?key=${CONFIG.api.gemini.apiKey}`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
-                                contents: finalGeminiContents,
+                                contents: geminiContents,
                                 generationConfig: {
                                     temperature: CONFIG.settings.temperature,
                                     maxOutputTokens: 8192
@@ -1407,9 +1464,83 @@ Your goal is to be a helpful, knowledgeable, and entertaining friend. Make every
                             }),
                         });
 
-                        if (!finalResponse.ok) throw new Error("Final answer request failed");
-                        const finalData = await finalResponse.json();
-                        finalAnswerText = finalData.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't process the search results.";
+                        if (!initialResponse.ok) {
+                            const errorBody = await initialResponse.json().catch(() => ({}));
+                            throw new Error(`Request failed with status ${initialResponse.status}: ${errorBody.error?.message || 'Unknown API Error'}`);
+                        }
+
+                        const initialData = await initialResponse.json();
+                        initialContent = initialData.candidates?.[0]?.content?.parts?.[0]?.text || "";
+                    } else if (provider === 'pollinations') {
+                        // Pollinations API call
+                        initialContent = await callPollinationsAPI(initialHistory, modelToUse);
+                    }
+
+                    let finalAnswerText = "";
+                    const searchMatch = initialContent.match(/\[SEARCH: "([^"]+)"\]/);
+
+                    if (searchMatch && searchMatch[1]) {
+                        const searchQuery = searchMatch[1];
+                        setChatMessages(prev => prev.map(m => m.id === targetAiMessageUiId ? { ...m, isLoading: true, searchQuery: searchQuery, loadingText: null } : m));
+
+                        const { toolContent, sources } = await performSerperSearch(searchQuery);
+
+                        // Show sources briefly before generating response
+                        setChatMessages(prev => prev.map(m => m.id === targetAiMessageUiId ? { ...m, isLoading: true, sources: sources, showSourcesOnly: true, searchQuery: null } : m));
+
+                        // Brief delay to show sources to user
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                        if (isStoppingGenerationRef.current) throw new Error("Generation stopped");
+
+                        // Continue with response generation while keeping sources visible and show analyzing indicator
+                        setChatMessages(prev => prev.map(m => m.id === targetAiMessageUiId ? { ...m, isLoading: true, sources: sources, showSourcesOnly: false, searchQuery: null, isAnalyzing: true } : m));
+
+                        // Create enhanced history with search results for single API call
+                        const enhancedHistory = [
+                            ...initialHistory,
+                            { role: 'user', content: `${initialHistory[initialHistory.length - 1].content}\n\nSearch Results for "${searchQuery}":\n${toolContent}\n\nPlease use this information to answer my question in Roman Urdu. Don't mention the search process.` }
+                        ];
+
+                        // Single API call with search results
+                        if (provider === 'gemini') {
+                            const geminiContents = enhancedHistory.map(msg => {
+                                const role = msg.role === 'assistant' ? 'model' : 'user';
+
+                                // Handle complex content (text + images)
+                                if (Array.isArray(msg.content)) {
+                                    const parts = msg.content.map(part => {
+                                        if (part.text) {
+                                            return { text: part.text };
+                                        } else if (part.inline_data) {
+                                            return { inline_data: part.inline_data };
+                                        }
+                                        return part;
+                                    });
+                                    return { role, parts };
+                                } else {
+                                    // Handle simple text content
+                                    return { role, parts: [{ text: msg.content }] };
+                                }
+                            });
+
+                            const response = await fetch(`${CONFIG.api.gemini.baseUrl}/${modelToUse}:generateContent?key=${CONFIG.api.gemini.apiKey}`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    contents: geminiContents,
+                                    generationConfig: {
+                                        temperature: CONFIG.settings.temperature,
+                                        maxOutputTokens: 8192
+                                    }
+                                }),
+                            });
+
+                            if (!response.ok) throw new Error("Search response request failed");
+                            const data = await response.json();
+                            finalAnswerText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't process the search results.";
+                        } else if (provider === 'pollinations') {
+                            finalAnswerText = await callPollinationsAPI(enhancedHistory, modelToUse);
+                        }
 
                     } else {
                         finalAnswerText = initialContent;
@@ -1449,7 +1580,10 @@ Your goal is to be a helpful, knowledgeable, and entertaining friend. Make every
                     timestamp: new Date().getTime(),
                     uiOnlyAttachedFiles: filesToSendFromInput,
                 };
-                const historyForA4f = getA4fHistory([...chatMessages, tempUserMessage]);
+                // Determine provider for history formatting
+                const modelConfig = CONFIG.models.list.find(m => m.id === selectedModel);
+                const provider = modelConfig?.provider || 'gemini';
+                const historyForA4f = getA4fHistory([...chatMessages, tempUserMessage], provider);
 
                 await addMessageToLocalChat('user', messageText, filesToSendFromInput);
 
@@ -1486,7 +1620,10 @@ Your goal is to be a helpful, knowledgeable, and entertaining friend. Make every
 
                 if (userPromptIndex === -1) { setToast({ text: "Cannot regenerate: Original user prompt not found.", type: 'error' }); setIsChatLoading(false); return; }
 
-                const historyForApi = getA4fHistory(messagesSnapshot.slice(0, userPromptIndex + 1));
+                // Determine provider for history formatting
+                const modelConfig = CONFIG.models.list.find(m => m.id === modelUsedForOriginal);
+                const provider = modelConfig?.provider || 'gemini';
+                const historyForApi = getA4fHistory(messagesSnapshot.slice(0, userPromptIndex + 1), provider);
 
                 const newAiMessageId = Date.now().toString() + '_model_regen_ui';
 
