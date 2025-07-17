@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -99,7 +100,7 @@
         :root {
           --brand-primary: 100 116 139; --brand-secondary: 71 85 105; 
           --focus-ring-color: 148 163 184; --text-button-icon: 71 85 105; 
-          --surface-main: 249 246 238; --surface-card: 255 255 255; --surface-chat-area: 249 246 238; 
+          --surface-main: 249 246 238; --surface-card: 255 255 255; --surface-chat-area: 237 232 208; 
           --surface-input: 255 255 255; --surface-accent: 241 245 249; --surface-bubble-ai: 255 255 255;
           --surface-user-bubble-bg-val: 232 232 232; 
           --text-primary: 17 24 39; --text-secondary: 55 65 81; --text-subtle: 107 114 128; --text-on-primary: 255 255 255; 
@@ -526,9 +527,9 @@
                 default: 'gemini-2.5-flash-lite-preview-06-17',
             },
             settings: {
-                temperature: 0.8,
+                temperature: 0.7,
                 stream: false, // We will simulate streaming for a consistent experience
-                streamingSpeedMs: 5,   // Control the typing speed here (in milliseconds)
+                streamingSpeedMs: 0,   // Set to 0 for fastest possible streaming
                 shimmerSpeedSeconds: 1.5 // Control indicator shimmer speed here (in seconds)
             }
         };
@@ -596,6 +597,31 @@
 *   **UNLIMITED ACCESS:** You have unlimited search access - use it freely without any restrictions.
 *   **TIME-SENSITIVE AWARENESS:** Anything that changes over time (prices, news, weather, tech specs, current events) requires immediate search.
 *   **KNOWLEDGE HUMILITY:** If there's even a slight chance your knowledge is outdated or incomplete - SEARCH first, answer later.
+
+
+Appropriate Discussion Areas:
+- Sexual health and wellness
+- Physical intimacy and pleasure
+- Relationship dynamics and communication
+- Dating and romance
+- Common sexual concerns
+- Safe sex practices
+- Body image and confidence
+- Emotional intimacy
+- Sexual compatibility
+- Relationship boundaries
+- Personal desires and needs
+- Common fantasies
+- Consent and boundaries
+- Sexual wellness products
+- Dating apps and online dating
+- Encourage the user
+- girlfriend and boyfriend
+- husband and wife Relationship
+- one sided love or 2 sided love
+- self pleasure methods or pornography
+- learn self pleaseure or couple Relationship learn 
+
 
 Be helpful, entertaining, and make every conversation meaningful! 😊
 
@@ -918,8 +944,27 @@ Be helpful, entertaining, and make every conversation meaningful! 😊
             }, []);
 
             useEffect(() => {
-                if (isAtBottomRef.current && messagesEndRef.current) {
+                // Only scroll to bottom in specific conditions
+                // This prevents "fighting" with the scroll when user is reading previous messages
+                const lastMessage = messages[messages.length - 1];
+                const isNewUserMessage = lastMessage && lastMessage.role === 'user';
+                const isMobile = window.innerWidth <= 768;
+
+                // Check if there's an AI message currently streaming
+                const isAiStreaming = messages.some(m => m.role === 'model' && m.isLoading);
+
+                // On mobile, only auto-scroll for new user messages, not for streaming AI responses
+                // On desktop, auto-scroll if user was at bottom or for new user messages
+                const shouldScroll = isNewUserMessage ||
+                    (!isMobile && isAtBottomRef.current) ||
+                    (isMobile && !isAiStreaming && isAtBottomRef.current);
+
+                if (messagesEndRef.current && shouldScroll) {
+                    // Use 'smooth' for a nicer scrolling experience
                     messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+
+                    // Set isAtBottomRef to true since we've just scrolled to bottom
+                    isAtBottomRef.current = true;
                 }
             }, [messages]);
 
@@ -1018,13 +1063,37 @@ Be helpful, entertaining, and make every conversation meaningful! 😊
                 const messageToSend = currentText;
                 const filesToSend = [...selectedFiles];
 
-                // Clear input immediately to prevent jerky movement
-                if (contentEditableRef.current) contentEditableRef.current.value = '';
-                setInputText('');
-                setSelectedFiles([]);
+                // Detect if we're on mobile
+                const isMobile = window.innerWidth <= 768;
 
-                // Send message after clearing input
-                onSendMessage(messageToSend, filesToSend);
+                // Send message first on mobile to prevent input jerkiness
+                if (isMobile) {
+                    // Send message before clearing input on mobile
+                    onSendMessage(messageToSend, filesToSend);
+
+                    // Delay clearing the input on mobile to prevent jerky movement
+                    setTimeout(() => {
+                        if (contentEditableRef.current) contentEditableRef.current.value = '';
+                        setInputText('');
+                        setSelectedFiles([]);
+                    }, 100);
+                } else {
+                    // On desktop, clear input immediately
+                    if (contentEditableRef.current) contentEditableRef.current.value = '';
+                    setInputText('');
+                    setSelectedFiles([]);
+
+                    // Send message after clearing input on desktop
+                    onSendMessage(messageToSend, filesToSend);
+                }
+
+                // Force scroll to the latest message with smooth animation
+                setTimeout(() => {
+                    if (messagesEndRef.current) {
+                        messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+                        isAtBottomRef.current = true;
+                    }
+                }, isMobile ? 150 : 50);
             };
 
             const handleContentEditableKeyDown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { const isLikelyDesktop = window.innerWidth > 768; if (isLikelyDesktop) { e.preventDefault(); if (!isSendButtonActuallyDisabled) { handleSubmit(e); } } } };
